@@ -236,7 +236,7 @@ def load_config():
         log.error("Get a free key at: https://fred.stlouisfed.org/docs/api/api_key.html")
         sys.exit(1)
 
-    with open(CONFIG_FILE, "r") as f:
+    with open(CONFIG_FILE, "r", encoding="utf-8-sig") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
