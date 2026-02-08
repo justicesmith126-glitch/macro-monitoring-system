@@ -744,7 +744,7 @@ def main():
     # Load configuration
     config = load_config()
     api_key = config["FRED_API_KEY"]
-    cache_ttl = float(config.get("CACHE_TTL_HOURS", "1"))
+    cache_ttl = float(config.get("CACHE_TTL_HOURS") or "1")
 
     # Initialize FRED client
     client = FREDClient(api_key, cache_ttl_hours=cache_ttl)
