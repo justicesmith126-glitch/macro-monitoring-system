@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .fred_cache.json
+config.env
 *.swp
 *.swo
 *~
