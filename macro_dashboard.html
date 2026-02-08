@@ -192,17 +192,12 @@
 </div>
 
 <div class="controls">
-  <label for="apiKey">FRED API Key:</label>
-  <input type="password" id="apiKey" placeholder="Paste your FRED API key here" autocomplete="off">
-  <button class="btn-fetch" id="fetchBtn" onclick="fetchAllData()">Fetch Live Data</button>
-  <button class="btn-auto" id="autoBtn" onclick="toggleAutoRefresh()">Auto-Refresh: OFF</button>
-  <span class="fetch-status" id="fetchStatus"></span>
+  <button class="btn-fetch" id="fetchBtn" onclick="reloadData()">Reload Data</button>
+  <span class="fetch-status" id="fetchStatus">Run "py macro_data_updater.py" to update data, then click Reload</span>
 </div>
 
-<div class="progress-bar" id="progressBar"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
-
 <div class="regime-banner" id="regimeBanner">
-  Enter your FRED API key above and click "Fetch Live Data"
+  Run the Python updater to load data, then refresh this page
 </div>
 
 <div class="scores-row">
@@ -233,13 +228,14 @@
 </div>
 
 <div class="footer">
-  Macro Economic Monitoring System &bull; Data from FRED (Federal Reserve) &bull; Auto-refreshes from the FRED API
-  <br><span class="next-refresh" id="nextRefresh"></span>
+  Macro Economic Monitoring System &bull; Data from FRED (Federal Reserve) &bull; Run "py macro_data_updater.py" to refresh data
 </div>
 
+<!-- Load data file written by macro_data_updater.py (must be before main script) -->
+<script src="macro_data.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// MARKET DATA - starts empty, populated by FRED API fetch
+// MARKET DATA - populated from macro_data.js (written by Python script)
 // ═══════════════════════════════════════════════════════════════════
 const marketData = {
   fedFundsRate: null, treasury10Y: null, treasury2Y: null,
@@ -251,244 +247,6 @@ const marketData = {
   vix: null, sp500: null,
   lastUpdated: "--"
 };
-
-// ═══════════════════════════════════════════════════════════════════
-// FRED API FETCHING (runs directly in the browser)
-// ═══════════════════════════════════════════════════════════════════
-const FRED_URL = "https://api.stlouisfed.org/fred/series/observations";
-
-// Series to fetch: [FRED_ID, marketData_key, transform, extra_obs_needed]
-const SERIES_MAP = [
-  ["DFF",           "fedFundsRate",  "direct",     1],
-  ["DGS10",         "treasury10Y",   "direct",     1],
-  ["DGS2",          "treasury2Y",    "direct",     1],
-  ["DFII10",        "tips10Y",       "direct",     1],
-  ["T10YIE",        "breakeven10Y",  "direct",     1],
-  ["T5YIFR",        "forward5Y5Y",   "direct",     1],
-  ["CPIAUCSL",      "cpiYoY",        "yoy",       15],
-  ["CPIAUCSL",      "cpiMoM",        "mom",       3],
-  ["PCEPILFE",      "corePCE",       "yoy",       15],
-  ["BAMLH0A0HYM2",  "hySpread",      "bp",         1],
-  ["BAMLC0A0CM",    "igSpread",      "bp",         1],
-  ["BAMLC0A3CA",    "aaSpread",      "bp",         1],
-  ["UNRATE",        "unemployment",  "direct",     1],
-  ["PAYEMS",        "nfp",           "mom_diff",   3],
-  ["ICSA",          "initialClaims", "div1000",    1],
-  ["JTSJOL",        "jolts",         "div1000",    1],
-  ["GDP",           "gdpGrowth",     "gdp_qoq",   3],
-  ["VIXCLS",        "vix",           "direct",     1],
-  ["SP500",         "sp500",         "direct",     1],
-];
-
-// Deduplicate: some FRED series are used twice (CPIAUCSL for YoY and MoM)
-function getUniqueSeries() {
-  const seen = {};
-  for (const [id, , , obs] of SERIES_MAP) {
-    if (!seen[id] || seen[id] < obs) seen[id] = obs;
-  }
-  return Object.entries(seen); // [[id, obs_needed], ...]
-}
-
-async function fetchFredSeries(seriesId, apiKey, limit) {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 450);
-  const startStr = startDate.toISOString().split("T")[0];
-
-  const params = new URLSearchParams({
-    series_id: seriesId,
-    api_key: apiKey,
-    file_type: "json",
-    sort_order: "desc",
-    limit: limit,
-    observation_start: startStr,
-  });
-
-  const resp = await fetch(`${FRED_URL}?${params}`);
-  if (!resp.ok) {
-    if (resp.status === 400) {
-      const err = await resp.json();
-      throw new Error(err.error_message || "Bad request");
-    }
-    throw new Error(`HTTP ${resp.status}`);
-  }
-  const data = await resp.json();
-  return (data.observations || []).filter(o => o.value !== "." && o.value !== "");
-}
-
-// Transform functions
-function transform(obs, type) {
-  if (!obs || obs.length === 0) return null;
-  const latest = parseFloat(obs[0].value);
-  if (isNaN(latest)) return null;
-
-  switch(type) {
-    case "direct":
-      return Math.round(latest * 100) / 100;
-
-    case "bp":
-      return Math.round(latest * 100);
-
-    case "div1000":
-      return Math.round(latest / 1000 * 100) / 100;
-
-    case "mom_diff":
-      if (obs.length < 2) return null;
-      const prev = parseFloat(obs[1].value);
-      return isNaN(prev) ? null : Math.round((latest - prev) * 10) / 10;
-
-    case "yoy": {
-      const latestDate = new Date(obs[0].date);
-      const targetDate = new Date(latestDate);
-      targetDate.setFullYear(targetDate.getFullYear() - 1);
-      let bestMatch = null, bestDiff = Infinity;
-      for (const o of obs) {
-        const d = new Date(o.date);
-        const diff = Math.abs(d - targetDate);
-        if (diff < bestDiff) { bestDiff = diff; bestMatch = o; }
-      }
-      if (bestMatch && bestDiff < 45 * 86400000) {
-        const yearAgo = parseFloat(bestMatch.value);
-        if (!isNaN(yearAgo) && yearAgo !== 0)
-          return Math.round(((latest - yearAgo) / yearAgo) * 10000) / 100;
-      }
-      return null;
-    }
-
-    case "mom": {
-      if (obs.length < 2) return null;
-      const prevVal = parseFloat(obs[1].value);
-      if (isNaN(prevVal) || prevVal === 0) return null;
-      return Math.round(((latest - prevVal) / prevVal) * 10000) / 100;
-    }
-
-    case "gdp_qoq": {
-      if (obs.length < 2) return null;
-      const prevGdp = parseFloat(obs[1].value);
-      if (isNaN(prevGdp) || prevGdp === 0) return null;
-      const qoq = (latest - prevGdp) / prevGdp;
-      return Math.round(((1 + qoq) ** 4 - 1) * 1000) / 10;
-    }
-
-    default: return latest;
-  }
-}
-
-let isFetching = false;
-
-async function fetchAllData() {
-  const apiKeyInput = document.getElementById("apiKey");
-  const apiKey = apiKeyInput.value.trim();
-  if (!apiKey) {
-    setStatus("Enter your FRED API key first", "error");
-    apiKeyInput.focus();
-    return;
-  }
-
-  // Save key to localStorage so they don't have to re-enter it
-  localStorage.setItem("fred_api_key", apiKey);
-
-  if (isFetching) return;
-  isFetching = true;
-
-  const btn = document.getElementById("fetchBtn");
-  btn.disabled = true;
-  btn.textContent = "Fetching...";
-  setStatus("Connecting to FRED API...", "");
-
-  const progressBar = document.getElementById("progressBar");
-  const progressFill = document.getElementById("progressFill");
-  progressBar.classList.add("active");
-  progressFill.style.width = "0%";
-
-  const uniqueSeries = getUniqueSeries();
-  const rawData = {}; // seriesId -> observations
-  let completed = 0;
-  let errors = 0;
-
-  // Fetch all series (with small delay to be nice to FRED)
-  for (const [seriesId, obsNeeded] of uniqueSeries) {
-    try {
-      setStatus(`Fetching ${seriesId}... (${completed + 1}/${uniqueSeries.length})`, "");
-      rawData[seriesId] = await fetchFredSeries(seriesId, apiKey, obsNeeded);
-      completed++;
-    } catch (e) {
-      console.warn(`Failed to fetch ${seriesId}:`, e.message);
-      errors++;
-      completed++;
-    }
-    progressFill.style.width = Math.round((completed / uniqueSeries.length) * 100) + "%";
-    // Small delay between requests to respect rate limits
-    await new Promise(r => setTimeout(r, 200));
-  }
-
-  // Apply transforms and update marketData
-  for (const [seriesId, dataKey, transformType] of SERIES_MAP) {
-    if (rawData[seriesId]) {
-      const val = transform(rawData[seriesId], transformType);
-      if (val !== null) marketData[dataKey] = val;
-    }
-  }
-
-  marketData.lastUpdated = new Date().toLocaleString();
-
-  // Save data to localStorage for offline access
-  localStorage.setItem("macro_dashboard_data", JSON.stringify(marketData));
-
-  render();
-
-  progressBar.classList.remove("active");
-  btn.disabled = false;
-  btn.textContent = "Fetch Live Data";
-  isFetching = false;
-
-  if (errors === 0) {
-    setStatus(`All ${uniqueSeries.length} series fetched successfully`, "success");
-  } else {
-    setStatus(`${uniqueSeries.length - errors} fetched, ${errors} failed`, errors > uniqueSeries.length / 2 ? "error" : "success");
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// AUTO-REFRESH
-// ═══════════════════════════════════════════════════════════════════
-let autoRefreshInterval = null;
-let nextRefreshTime = null;
-let countdownInterval = null;
-const AUTO_REFRESH_MS = 4 * 60 * 60 * 1000; // 4 hours
-
-function toggleAutoRefresh() {
-  const btn = document.getElementById("autoBtn");
-  if (autoRefreshInterval) {
-    clearInterval(autoRefreshInterval);
-    clearInterval(countdownInterval);
-    autoRefreshInterval = null;
-    nextRefreshTime = null;
-    btn.textContent = "Auto-Refresh: OFF";
-    btn.classList.remove("active");
-    document.getElementById("nextRefresh").textContent = "";
-    localStorage.removeItem("auto_refresh_on");
-  } else {
-    autoRefreshInterval = setInterval(() => fetchAllData(), AUTO_REFRESH_MS);
-    nextRefreshTime = Date.now() + AUTO_REFRESH_MS;
-    btn.textContent = "Auto-Refresh: ON (4h)";
-    btn.classList.add("active");
-    localStorage.setItem("auto_refresh_on", "true");
-    updateCountdown();
-    countdownInterval = setInterval(updateCountdown, 60000);
-  }
-}
-
-function updateCountdown() {
-  if (!nextRefreshTime) return;
-  const remaining = nextRefreshTime - Date.now();
-  if (remaining <= 0) {
-    nextRefreshTime = Date.now() + AUTO_REFRESH_MS;
-    return;
-  }
-  const hours = Math.floor(remaining / 3600000);
-  const mins = Math.floor((remaining % 3600000) / 60000);
-  document.getElementById("nextRefresh").textContent = `Next auto-refresh in ${hours}h ${mins}m`;
-}
 
 function setStatus(msg, type) {
   const el = document.getElementById("fetchStatus");
@@ -716,28 +474,31 @@ function render() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// STARTUP - restore saved data and API key
+// LOAD DATA FROM macro_data.js (written by Python script)
+// ═══════════════════════════════════════════════════════════════════
+function loadFromDataFile() {
+  // FRED_DATA is set by macro_data.js loaded via <script> tag
+  if (typeof FRED_DATA !== "undefined" && FRED_DATA) {
+    Object.assign(marketData, FRED_DATA);
+    setStatus("Data loaded from macro_data.js (" + (marketData.lastUpdated || "unknown date") + ")", "success");
+    return true;
+  }
+  return false;
+}
+
+function reloadData() {
+  // Reload the page to re-read macro_data.js from disk
+  setStatus("Reloading...", "");
+  location.reload();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STARTUP
 // ═══════════════════════════════════════════════════════════════════
 (function init() {
-  // Restore API key
-  const savedKey = localStorage.getItem("fred_api_key");
-  if (savedKey) document.getElementById("apiKey").value = savedKey;
-
-  // Restore last fetched data
-  const savedData = localStorage.getItem("macro_dashboard_data");
-  if (savedData) {
-    try {
-      const parsed = JSON.parse(savedData);
-      Object.assign(marketData, parsed);
-      setStatus("Showing cached data. Click Fetch for latest.", "");
-    } catch (e) { /* ignore */ }
+  if (!loadFromDataFile()) {
+    setStatus('No data yet. Run "py macro_data_updater.py" in Command Prompt, then refresh this page.', "error");
   }
-
-  // Restore auto-refresh
-  if (localStorage.getItem("auto_refresh_on") === "true") {
-    toggleAutoRefresh();
-  }
-
   render();
 })();
 </script>
