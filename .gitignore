@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.fred_cache.json
+*.swp
+*.swo
+*~

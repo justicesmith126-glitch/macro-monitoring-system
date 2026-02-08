@@ -1,0 +1,304 @@
+========================================================================
+  HOW TO USE THE MACRO DATA UPDATER (macro_data_updater.py)
+========================================================================
+  Automated FRED API data fetcher for the Macro Monitoring System
+  Based on "The Price of Time" by Edward Chancellor
+========================================================================
+
+
+TABLE OF CONTENTS
+------------------------------------------------------------------------
+1. Prerequisites
+2. Initial Setup (5 minutes)
+3. Running the Updater
+4. Command-Line Options
+5. Excel Cell Mapping
+6. FRED Series Reference
+7. Scheduling Automatic Updates
+8. Troubleshooting
+9. Advanced Configuration
+
+
+========================================================================
+1. PREREQUISITES
+========================================================================
+
+You need:
+  [x] Python 3.8 or later (https://www.python.org/downloads/)
+  [x] A free FRED API key
+  [x] The Macro_Monitoring_Workbook.xlsx file
+
+Getting a FRED API Key (free):
+  1. Go to: https://fred.stlouisfed.org/docs/api/api_key.html
+  2. Click "Request API Key"
+  3. Create a free account (or log in)
+  4. Your API key will be shown immediately
+  5. Copy it - you'll need it in Step 2
+
+
+========================================================================
+2. INITIAL SETUP (5 minutes)
+========================================================================
+
+Step 1: Install Python packages
+  Open a terminal/command prompt and run:
+
+    pip install -r requirements.txt
+
+  This installs: requests, openpyxl
+
+Step 2: Configure your API key
+  Open config.env in any text editor and replace:
+
+    FRED_API_KEY=your_fred_api_key_here
+
+  With your actual key:
+
+    FRED_API_KEY=abcdef1234567890abcdef1234567890
+
+Step 3: Verify the Excel workbook exists
+  Make sure Macro_Monitoring_Workbook.xlsx is in the same folder
+  as macro_data_updater.py. If not, generate it:
+
+    python create_excel.py
+
+Step 4: Test with a dry run
+    python macro_data_updater.py --dry-run
+
+  This fetches data but does NOT write to Excel.
+  Verify the values look correct.
+
+Step 5: Run for real
+    python macro_data_updater.py
+
+  Or on Windows, double-click: run_updater.bat
+
+
+========================================================================
+3. RUNNING THE UPDATER
+========================================================================
+
+Basic usage (updates all series):
+
+    python macro_data_updater.py
+
+What happens:
+  1. Reads config.env for your API key
+  2. Fetches latest data from FRED for all 19 series
+  3. Transforms raw data (YoY changes, basis points, etc.)
+  4. Opens the Excel workbook
+  5. Moves current values to "Previous" column (C)
+  6. Writes new values to "Current" column (B)
+  7. Updates the timestamp
+  8. Saves the workbook
+  9. Writes a summary to update_log.txt
+
+On Windows:
+  Double-click run_updater.bat (easiest method)
+
+
+========================================================================
+4. COMMAND-LINE OPTIONS
+========================================================================
+
+--dry-run
+  Fetch and display data without writing to Excel.
+  Great for testing and verification.
+
+    python macro_data_updater.py --dry-run
+
+--series SERIES [SERIES ...]
+  Only update specific FRED series.
+
+    python macro_data_updater.py --series DGS10 DGS2 VIXCLS
+
+--dashboard
+  Also update the HTML dashboard file (macro_dashboard.html)
+  with the fetched data.
+
+    python macro_data_updater.py --dashboard
+
+--no-cache
+  Bypass the local cache and force fresh API requests.
+  (Cache default TTL: 1 hour)
+
+    python macro_data_updater.py --no-cache
+
+--workbook PATH
+  Use a different Excel workbook path.
+
+    python macro_data_updater.py --workbook "C:\Users\me\Desktop\MyWorkbook.xlsx"
+
+--verbose / -v
+  Show detailed debug output.
+
+    python macro_data_updater.py -v
+
+Combine options:
+
+    python macro_data_updater.py --series DGS10 DGS2 --dry-run -v
+
+
+========================================================================
+5. EXCEL CELL MAPPING
+========================================================================
+
+The updater writes to these cells in the "Dashboard" sheet:
+
+  Cell   Indicator                      FRED Series     Transform
+  ----   ---------------------------    -------------   ------------------
+  B6     Fed Funds Rate (%)             DFF             Direct value
+  B7     10-Year Treasury Yield (%)     DGS10           Direct value
+  B8     2-Year Treasury Yield (%)      DGS2            Direct value
+  B9     Yield Curve 10Y-2Y (bp)        (formula)       Auto-calculated
+  B10    10-Year TIPS Yield (%)         DFII10          Direct value
+  B11    10Y Breakeven Inflation (%)    T10YIE          Direct value
+  B13    Real Fed Funds Rate (%)        (formula)       Auto-calculated
+  B14    Real 10Y Rate TIPS (%)         (formula)       Auto-calculated
+  B15    Real 10Y Rate Fisher (%)       (formula)       Auto-calculated
+  B18    CPI Year-over-Year (%)         CPIAUCSL        YoY % change
+  B19    Core PCE Year-over-Year (%)    PCEPILFE        YoY % change
+  B20    CPI Month-over-Month (%)       CPIAUCSL        MoM % change
+  B21    5Y5Y Forward Inflation (%)     T5YIFR          Direct value
+  B24    HY OAS Spread (bp)             BAMLH0A0HYM2    * 100 (to bp)
+  B25    IG OAS Spread (bp)             BAMLC0A0CM      * 100 (to bp)
+  B26    BBB-AA Spread (bp)             (formula)       Auto-calculated
+  B27    AA OAS Spread (bp)             BAMLC0A3CA      * 100 (to bp)
+  B28    TED Spread (bp)                TEDRATE         * 100 (to bp)
+  B31    Unemployment Rate (%)          UNRATE          Direct value
+  B32    Nonfarm Payrolls (k)           PAYEMS          MoM change
+  B33    Initial Claims (k)             ICSA            / 1000
+  B34    JOLTS Openings (M)             JTSJOL          / 1000
+  B37    GDP Growth QoQ Ann. (%)        GDP             QoQ annualized
+  B43    S&P 500 Level                  SP500           Direct value
+  B45    VIX                            VIXCLS          Direct value
+
+  Auto-calculated cells (Excel formulas, NOT overwritten):
+  B9   = ((B7-B8)*100)         Yield curve spread
+  B13  = (B6-B18)              Real fed funds rate
+  B14  = B10                   Real 10Y (TIPS)
+  B15  = (B7-B18)              Real 10Y (Fisher)
+  B26  = (B25-B27)             BBB-AA spread
+
+  Rows 48-53: Regime detection (all formula-driven, not overwritten)
+
+
+========================================================================
+6. FRED SERIES REFERENCE
+========================================================================
+
+  Series ID        Description                    Frequency
+  ---------------  ---------------------------    ----------
+  DFF              Fed Funds Rate (daily)         Daily
+  DGS10            10-Year Treasury Yield         Daily
+  DGS2             2-Year Treasury Yield          Daily
+  DFII10           10-Year TIPS Yield             Daily
+  T10YIE           10-Year Breakeven Inflation    Daily
+  T5YIFR           5Y5Y Forward Inflation         Daily
+  CPIAUCSL         CPI (all urban consumers)      Monthly
+  PCEPILFE         Core PCE Price Index            Monthly
+  BAMLH0A0HYM2     HY OAS Spread                  Daily
+  BAMLC0A0CM       IG OAS Spread                  Daily
+  BAMLC0A3CA       AA OAS Spread                  Daily
+  TEDRATE          TED Spread                     Daily
+  UNRATE           Unemployment Rate               Monthly
+  PAYEMS           Nonfarm Payrolls               Monthly
+  ICSA             Initial Jobless Claims         Weekly
+  JTSJOL           JOLTS Job Openings             Monthly
+  GDP              Gross Domestic Product         Quarterly
+  VIXCLS           CBOE VIX                       Daily
+  SP500            S&P 500 Index                  Daily
+
+
+========================================================================
+7. SCHEDULING AUTOMATIC UPDATES
+========================================================================
+
+Windows (Task Scheduler):
+  1. Open Task Scheduler (search in Start menu)
+  2. Click "Create Basic Task"
+  3. Name: "Macro Data Update"
+  4. Trigger: Weekly, Monday at 9:00 AM
+  5. Action: Start a program
+     Program: python
+     Arguments: macro_data_updater.py
+     Start in: C:\path\to\macro-monitoring-system
+  6. Finish
+
+Mac/Linux (cron):
+  Run: crontab -e
+  Add this line (updates every Monday at 9 AM):
+
+    0 9 * * 1 cd /path/to/macro-monitoring-system && python3 macro_data_updater.py >> cron_log.txt 2>&1
+
+  Save and exit.
+
+
+========================================================================
+8. TROUBLESHOOTING
+========================================================================
+
+Problem: "FRED_API_KEY not set in config.env"
+  Fix: Open config.env and replace "your_fred_api_key_here" with your key.
+
+Problem: "Workbook not found"
+  Fix: Run "python create_excel.py" to generate the Excel file.
+
+Problem: "Cannot save workbook - file may be open in Excel"
+  Fix: Close the Excel file, then re-run the updater.
+
+Problem: "Rate limited" warnings
+  Fix: Normal behavior. The updater automatically waits and retries.
+       FRED allows 120 requests/minute. The built-in delay handles this.
+
+Problem: "No valid observations for <series>"
+  Fix: Some series update less frequently (GDP = quarterly).
+       This is normal. Check FRED website for the series status.
+
+Problem: "Connection error"
+  Fix: Check your internet connection. The updater retries 3 times
+       with exponential backoff automatically.
+
+Problem: Values look wrong
+  Fix: Run with --dry-run -v to see raw and transformed values.
+       Check if the transform is correct for that series.
+       Some FRED series change units or methodology.
+
+Problem: "ModuleNotFoundError: No module named 'requests'"
+  Fix: Run "pip install -r requirements.txt"
+
+
+========================================================================
+9. ADVANCED CONFIGURATION
+========================================================================
+
+Changing the cache duration:
+  In config.env, set:
+    CACHE_TTL_HOURS=2
+
+  Set to 0 to disable caching entirely.
+
+Adding new FRED series:
+  Edit macro_data_updater.py and add to SERIES_MAPPING:
+
+    "NEW_SERIES_ID": {
+        "cell": "B<row>",
+        "name": "Description",
+        "transform": None,  # or "yoy_pct_change", etc.
+    },
+
+  Also add the series ID to the FETCH_SERIES list.
+
+Available transforms:
+  None                  - Use the raw value directly
+  "yoy_pct_change"      - Year-over-year percent change
+  "mom_pct_change"      - Month-over-month percent change
+  "mom_change_thousands" - Month-over-month absolute change
+  "gdp_qoq_annualized"  - Quarterly annualized growth rate
+  "divide_1000"          - Divide by 1000 (e.g., thousands to millions)
+  "basis_points"         - Multiply by 100 (percentage to basis points)
+
+
+========================================================================
+  END OF GUIDE
+========================================================================

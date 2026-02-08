@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Economic Monitoring Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1923;
+    --card-bg: #1a2733;
+    --card-border: #2a3f50;
+    --text: #e0e6ed;
+    --text-dim: #8899a6;
+    --accent: #1da1f2;
+    --green: #00c853;
+    --yellow: #ffd600;
+    --orange: #ff9100;
+    --red: #ff1744;
+    --header-bg: #15202b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 16px;
+  }
+  .header {
+    text-align: center;
+    padding: 20px;
+    background: var(--header-bg);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid var(--card-border);
+  }
+  .header h1 { font-size: 1.6em; color: var(--accent); margin-bottom: 4px; }
+  .header .subtitle { color: var(--text-dim); font-size: 0.85em; }
+  .header .updated { color: var(--text-dim); font-size: 0.75em; margin-top: 6px; }
+
+  .regime-banner {
+    text-align: center;
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+    font-weight: bold;
+    border: 2px solid;
+  }
+  .regime-goldilocks { background: rgba(0,200,83,0.12); border-color: var(--green); color: var(--green); }
+  .regime-inflation { background: rgba(255,145,0,0.12); border-color: var(--orange); color: var(--orange); }
+  .regime-stagflation { background: rgba(255,23,68,0.12); border-color: var(--red); color: var(--red); }
+  .regime-slowdown { background: rgba(255,214,0,0.12); border-color: var(--yellow); color: var(--yellow); }
+  .regime-bust { background: rgba(255,23,68,0.12); border-color: var(--red); color: var(--red); }
+  .regime-normal { background: rgba(29,161,242,0.12); border-color: var(--accent); color: var(--accent); }
+  .regime-implication { font-size: 0.55em; font-weight: normal; display: block; margin-top: 6px; color: var(--text-dim); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .card h2 {
+    font-size: 0.85em;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(42,63,80,0.5);
+  }
+  .metric:last-child { border-bottom: none; }
+  .metric-label { font-size: 0.82em; color: var(--text-dim); flex: 1; }
+  .metric-value { font-size: 0.95em; font-weight: 600; min-width: 70px; text-align: right; margin: 0 10px; }
+  .metric-status {
+    font-size: 0.7em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    min-width: 90px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .status-green  { background: rgba(0,200,83,0.15); color: var(--green); }
+  .status-yellow { background: rgba(255,214,0,0.15); color: var(--yellow); }
+  .status-orange { background: rgba(255,145,0,0.15); color: var(--orange); }
+  .status-red    { background: rgba(255,23,68,0.15); color: var(--red); }
+  .status-blue   { background: rgba(29,161,242,0.15); color: var(--accent); }
+
+  .scores-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .score-card {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .score-card h3 { font-size: 0.75em; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .score-value { font-size: 2em; font-weight: bold; margin: 6px 0; }
+  .score-label { font-size: 0.75em; color: var(--text-dim); }
+
+  .portfolio-table { width: 100%; border-collapse: collapse; font-size: 0.82em; }
+  .portfolio-table th {
+    background: var(--header-bg);
+    color: var(--accent);
+    padding: 8px;
+    text-align: center;
+    font-size: 0.8em;
+    text-transform: uppercase;
+  }
+  .portfolio-table td { padding: 6px 8px; border-bottom: 1px solid var(--card-border); text-align: center; }
+  .portfolio-table td:first-child { text-align: left; font-weight: 600; }
+  .portfolio-table .highlight { background: rgba(29,161,242,0.1); font-weight: bold; color: var(--accent); }
+
+  .footer { text-align: center; padding: 20px; color: var(--text-dim); font-size: 0.75em; }
+  @media (max-width: 720px) { .scores-row { flex-direction: column; } .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Macro Economic Monitoring Dashboard</h1>
+  <div class="subtitle">Based on "The Price of Time" by Edward Chancellor</div>
+  <div class="updated" id="lastUpdated">Last updated: --</div>
+</div>
+
+<div class="regime-banner" id="regimeBanner">
+  Loading regime data...
+</div>
+
+<div class="scores-row">
+  <div class="score-card">
+    <h3>Inflation Score</h3>
+    <div class="score-value" id="inflationScore">--</div>
+    <div class="score-label">0-1 Low | 2 Moderate | 3-4 High</div>
+  </div>
+  <div class="score-card">
+    <h3>Growth Score</h3>
+    <div class="score-value" id="growthScore">--</div>
+    <div class="score-label">0-1 Weak | 2 Moderate | 3-4 Strong</div>
+  </div>
+  <div class="score-card">
+    <h3>Credit Stress</h3>
+    <div class="score-value" id="creditScore">--</div>
+    <div class="score-label">0 Calm | 1-2 Elevated | 3-4 Stress</div>
+  </div>
+</div>
+
+<div class="grid" id="metricsGrid"></div>
+
+<div class="card" style="margin-bottom: 20px;">
+  <h2>Portfolio Allocation by Regime</h2>
+  <div style="overflow-x: auto;">
+    <table class="portfolio-table" id="portfolioTable"></table>
+  </div>
+</div>
+
+<div class="footer">
+  Macro Economic Monitoring System &bull; Data from FRED &bull; Created February 2026
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// MARKET DATA - Updated by macro_data_updater.py --dashboard
+// or edit manually below
+// ═══════════════════════════════════════════════════════════════════
+const marketData = {
+  "fedFundsRate": 5.33,
+  "treasury10Y": 4.25,
+  "treasury2Y": 4.15,
+  "tips10Y": 1.95,
+  "breakeven10Y": 2.30,
+  "cpiYoY": 2.9,
+  "corePCE": 2.6,
+  "forward5Y5Y": 2.35,
+  "cpiMoM": 0.3,
+  "hySpread": 340,
+  "igSpread": 95,
+  "aaSpread": 55,
+  "tedSpread": 25,
+  "unemployment": 4.0,
+  "nfp": 180,
+  "initialClaims": 215,
+  "jolts": 8.7,
+  "gdpGrowth": 2.5,
+  "ismMfg": 50.5,
+  "ismSvc": 53.4,
+  "vix": 16.5,
+  "sp500": 5100,
+  "sp200dma": 4850,
+  "lastUpdated": "2026-02-08 (sample data)"
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// THRESHOLD DEFINITIONS
+// ═══════════════════════════════════════════════════════════════════
+function getStatus(value, thresholds) {
+  // thresholds: [{max, label, color}, ...] sorted ascending
+  for (const t of thresholds) {
+    if (t.min !== undefined && t.max !== undefined) {
+      if (value >= t.min && value <= t.max) return { label: t.label, color: t.color };
+    } else if (t.max !== undefined) {
+      if (value <= t.max) return { label: t.label, color: t.color };
+    } else if (t.min !== undefined) {
+      if (value >= t.min) return { label: t.label, color: t.color };
+    }
+  }
+  return { label: "N/A", color: "blue" };
+}
+
+const sections = [
+  {
+    title: "Interest Rates & Yields",
+    metrics: [
+      { label: "Fed Funds Rate", key: "fedFundsRate", suffix: "%",
+        thresholds: [{max: 2.5, label: "Accommodative", color: "green"}, {max: 5.0, label: "Neutral", color: "yellow"}, {min: 5.0, label: "Restrictive", color: "red"}]},
+      { label: "10-Year Treasury", key: "treasury10Y", suffix: "%",
+        thresholds: [{max: 3.0, label: "Low", color: "green"}, {max: 4.5, label: "Normal", color: "yellow"}, {min: 4.5, label: "High", color: "orange"}]},
+      { label: "2-Year Treasury", key: "treasury2Y", suffix: "%",
+        thresholds: [{max: 3.0, label: "Low", color: "green"}, {max: 4.5, label: "Normal", color: "yellow"}, {min: 4.5, label: "High", color: "orange"}]},
+      { label: "Yield Curve (10Y-2Y)", value: ((marketData.treasury10Y - marketData.treasury2Y) * 100).toFixed(0) + " bp",
+        thresholds_value: (marketData.treasury10Y - marketData.treasury2Y) * 100,
+        thresholds: [{max: 0, label: "INVERTED", color: "red"}, {max: 50, label: "Flat", color: "yellow"}, {min: 50, label: "Normal", color: "green"}]},
+      { label: "10-Year TIPS (Real)", key: "tips10Y", suffix: "%",
+        thresholds: [{max: 0, label: "Loose", color: "green"}, {max: 0.5, label: "Moderate", color: "yellow"}, {max: 2.0, label: "Tight", color: "orange"}, {min: 2.0, label: "Very Tight", color: "red"}]},
+      { label: "10Y Breakeven Inflation", key: "breakeven10Y", suffix: "%",
+        thresholds: [{max: 2.0, label: "Low Expected", color: "green"}, {max: 3.0, label: "Normal", color: "yellow"}, {min: 3.0, label: "High Expected", color: "red"}]},
+    ]
+  },
+  {
+    title: "Inflation Metrics",
+    metrics: [
+      { label: "CPI Year-over-Year", key: "cpiYoY", suffix: "%",
+        thresholds: [{max: 2.0, label: "Low", color: "green"}, {max: 3.0, label: "Normal", color: "yellow"}, {max: 5.0, label: "Elevated", color: "orange"}, {min: 5.0, label: "Very High", color: "red"}]},
+      { label: "Core PCE (Fed Target)", key: "corePCE", suffix: "%",
+        thresholds: [{max: 1.5, label: "Below Target", color: "blue"}, {max: 2.5, label: "At Target", color: "green"}, {max: 4.0, label: "Above Target", color: "orange"}, {min: 4.0, label: "Very High", color: "red"}]},
+      { label: "5Y5Y Forward Inflation", key: "forward5Y5Y", suffix: "%",
+        thresholds: [{max: 2.0, label: "Unanchored Low", color: "blue"}, {max: 3.0, label: "Anchored", color: "green"}, {min: 3.0, label: "Unanchored High", color: "red"}]},
+    ]
+  },
+  {
+    title: "Credit Conditions",
+    metrics: [
+      { label: "HY OAS Spread", key: "hySpread", suffix: " bp",
+        thresholds: [{max: 300, label: "Tight", color: "blue"}, {max: 400, label: "Normal", color: "green"}, {max: 600, label: "Elevated", color: "orange"}, {min: 600, label: "STRESS", color: "red"}]},
+      { label: "IG OAS Spread", key: "igSpread", suffix: " bp",
+        thresholds: [{max: 80, label: "Tight", color: "blue"}, {max: 130, label: "Normal", color: "green"}, {max: 200, label: "Elevated", color: "orange"}, {min: 200, label: "STRESS", color: "red"}]},
+      { label: "TED Spread", key: "tedSpread", suffix: " bp",
+        thresholds: [{max: 50, label: "Normal", color: "green"}, {max: 100, label: "Elevated", color: "orange"}, {min: 100, label: "Banking Stress", color: "red"}]},
+    ]
+  },
+  {
+    title: "Labor Market",
+    metrics: [
+      { label: "Unemployment Rate", key: "unemployment", suffix: "%",
+        thresholds: [{max: 3.5, label: "Tight", color: "blue"}, {max: 5.0, label: "Normal", color: "green"}, {max: 6.0, label: "Weakening", color: "orange"}, {min: 6.0, label: "Recession", color: "red"}]},
+      { label: "Nonfarm Payrolls", key: "nfp", suffix: "k",
+        thresholds: [{max: 0, label: "Contraction", color: "red"}, {max: 100, label: "Slowing", color: "orange"}, {max: 250, label: "Normal", color: "green"}, {min: 250, label: "Strong", color: "blue"}]},
+      { label: "Initial Claims", key: "initialClaims", suffix: "k",
+        thresholds: [{max: 250, label: "Normal", color: "green"}, {max: 300, label: "Elevated", color: "orange"}, {min: 300, label: "Recession Risk", color: "red"}]},
+    ]
+  },
+  {
+    title: "Growth & Activity",
+    metrics: [
+      { label: "GDP Growth (QoQ Ann.)", key: "gdpGrowth", suffix: "%",
+        thresholds: [{max: 0, label: "Contraction", color: "red"}, {max: 1.0, label: "Stall Speed", color: "orange"}, {max: 3.0, label: "Normal", color: "green"}, {min: 3.0, label: "Strong", color: "blue"}]},
+      { label: "ISM Manufacturing", key: "ismMfg", suffix: "",
+        thresholds: [{max: 45, label: "Deep Contraction", color: "red"}, {max: 50, label: "Contraction", color: "orange"}, {max: 55, label: "Expansion", color: "green"}, {min: 55, label: "Strong", color: "blue"}]},
+      { label: "ISM Services", key: "ismSvc", suffix: "",
+        thresholds: [{max: 45, label: "Deep Contraction", color: "red"}, {max: 50, label: "Contraction", color: "orange"}, {max: 55, label: "Expansion", color: "green"}, {min: 55, label: "Strong", color: "blue"}]},
+    ]
+  },
+  {
+    title: "Market Indicators",
+    metrics: [
+      { label: "S&P 500", key: "sp500", suffix: "",
+        thresholds: [{min: 0, label: "", color: "blue"}]},
+      { label: "VIX", key: "vix", suffix: "",
+        thresholds: [{max: 12, label: "Complacent", color: "blue"}, {max: 20, label: "Normal", color: "green"}, {max: 30, label: "Elevated", color: "orange"}, {min: 30, label: "FEAR", color: "red"}]},
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// REGIME DETECTION
+// ═══════════════════════════════════════════════════════════════════
+function computeScores() {
+  const d = marketData;
+  let inflationScore = 0;
+  if (d.cpiYoY > 3) inflationScore++;
+  if (d.corePCE > 2.5) inflationScore++;
+  if (d.breakeven10Y > 2.5) inflationScore++;
+  if (d.forward5Y5Y > 2.8) inflationScore++;
+
+  let growthScore = 0;
+  if (d.gdpGrowth > 2) growthScore++;
+  if (d.ismMfg > 50) growthScore++;
+  if (d.ismSvc > 50) growthScore++;
+  if (d.unemployment < 5) growthScore++;
+
+  let creditScore = 0;
+  if (d.hySpread > 500) creditScore++;
+  if (d.igSpread > 150) creditScore++;
+  if (d.tedSpread > 75) creditScore++;
+  if (d.vix > 25) creditScore++;
+
+  return { inflationScore, growthScore, creditScore };
+}
+
+function detectRegime(scores) {
+  const { inflationScore, growthScore } = scores;
+  if (inflationScore >= 3 && growthScore >= 2) return { regime: "STAGFLATION WARNING", css: "stagflation", implication: "Reduce risk, add commodities & TIPS, short zombies" };
+  if (inflationScore >= 3 && growthScore <= 1) return { regime: "STAGFLATION", css: "stagflation", implication: "Max defensive: commodities, TIPS, cash, short zombies" };
+  if (inflationScore >= 2 && growthScore >= 3) return { regime: "INFLATIONARY BOOM", css: "inflation", implication: "Equities + commodities, short duration" };
+  if (inflationScore <= 1 && growthScore >= 3) return { regime: "GOLDILOCKS", css: "goldilocks", implication: "Risk-on: equities, credit, moderate duration" };
+  if (inflationScore <= 1 && growthScore <= 1) return { regime: "DEFLATIONARY BUST", css: "bust", implication: "Long duration bonds, reduce equities, defensive sectors" };
+  if (growthScore <= 1) return { regime: "SLOWDOWN", css: "slowdown", implication: "Add duration, reduce cyclicals, quality focus" };
+  if (inflationScore >= 2) return { regime: "INFLATION RISING", css: "inflation", implication: "Short duration, add commodities, reduce bonds" };
+  return { regime: "NORMAL / TRANSITION", css: "normal", implication: "Monitor closely, maintain balanced positioning" };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════════
+function render() {
+  // Update timestamp
+  document.getElementById("lastUpdated").textContent = "Last updated: " + marketData.lastUpdated;
+
+  // Scores
+  const scores = computeScores();
+  const scoreColors = [
+    {id: "inflationScore", val: scores.inflationScore, thresholds: [{max:1,color:"green"},{max:2,color:"yellow"},{min:3,color:"red"}]},
+    {id: "growthScore", val: scores.growthScore, thresholds: [{max:1,color:"red"},{max:2,color:"yellow"},{min:3,color:"green"}]},
+    {id: "creditScore", val: scores.creditScore, thresholds: [{max:0,color:"green"},{max:2,color:"yellow"},{min:3,color:"red"}]},
+  ];
+  for (const sc of scoreColors) {
+    const el = document.getElementById(sc.id);
+    el.textContent = sc.val + " / 4";
+    const st = getStatus(sc.val, sc.thresholds);
+    el.style.color = `var(--${st.color})`;
+  }
+
+  // Regime
+  const { regime, css, implication } = detectRegime(scores);
+  const banner = document.getElementById("regimeBanner");
+  banner.className = "regime-banner regime-" + css;
+  banner.innerHTML = "REGIME: " + regime + '<span class="regime-implication">' + implication + '</span>';
+
+  // Metrics grid
+  const grid = document.getElementById("metricsGrid");
+  grid.innerHTML = "";
+  for (const section of sections) {
+    const card = document.createElement("div");
+    card.className = "card";
+    let html = "<h2>" + section.title + "</h2>";
+    for (const m of section.metrics) {
+      let val, displayVal;
+      if (m.value !== undefined) {
+        displayVal = m.value;
+        val = m.thresholds_value;
+      } else {
+        val = marketData[m.key];
+        displayVal = (typeof val === "number") ? (Number.isInteger(val) ? val : val.toFixed(2)) + (m.suffix || "") : "N/A";
+      }
+      const status = (typeof val === "number") ? getStatus(val, m.thresholds) : { label: "N/A", color: "blue" };
+      html += '<div class="metric">' +
+        '<span class="metric-label">' + m.label + '</span>' +
+        '<span class="metric-value">' + displayVal + '</span>' +
+        '<span class="metric-status status-' + status.color + '">' + status.label + '</span>' +
+        '</div>';
+    }
+    card.innerHTML = html;
+    grid.appendChild(card);
+  }
+
+  // Portfolio table
+  const allocations = [
+    ["US Equities",      35, 25, 10, 20, 15],
+    ["Int'l Equities",   15, 10,  5, 10,  5],
+    ["Long Bonds",       15,  5,  5, 25, 35],
+    ["TIPS / I-Bonds",    5, 15, 20,  5,  5],
+    ["Short Bonds/Cash",  5, 10, 15, 15, 20],
+    ["Commodities",       5, 15, 20,  5,  0],
+    ["Gold",              5, 10, 15, 10, 10],
+    ["REITs",            10,  5,  0,  5,  5],
+    ["Crypto/Alts",       5,  5,  0,  0,  0],
+    ["Zombie Shorts",     0,  0, 10,  5,  5],
+  ];
+  const regimeNames = ["Goldilocks", "Inflation+", "Stagflation", "Slowdown", "Defl. Bust"];
+  const regimeMap = {"GOLDILOCKS":0, "INFLATIONARY BOOM":1, "INFLATION RISING":1, "STAGFLATION":2, "STAGFLATION WARNING":2, "SLOWDOWN":3, "DEFLATIONARY BUST":4, "NORMAL / TRANSITION":0};
+  const activeCol = regimeMap[regime] !== undefined ? regimeMap[regime] : 0;
+
+  const table = document.getElementById("portfolioTable");
+  let thtml = "<tr><th>Asset Class</th>";
+  for (let i = 0; i < regimeNames.length; i++) {
+    thtml += "<th" + (i === activeCol ? ' class="highlight"' : "") + ">" + regimeNames[i] + "</th>";
+  }
+  thtml += "</tr>";
+  for (const row of allocations) {
+    thtml += "<tr><td>" + row[0] + "</td>";
+    for (let i = 1; i <= 5; i++) {
+      thtml += "<td" + (i-1 === activeCol ? ' class="highlight"' : "") + ">" + row[i] + "%</td>";
+    }
+    thtml += "</tr>";
+  }
+  table.innerHTML = thtml;
+}
+
+render();
+</script>
+</body>
+</html>

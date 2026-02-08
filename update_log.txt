@@ -1,0 +1,12 @@
+========================================================================
+  MACRO DATA UPDATER - LOG FILE
+========================================================================
+  This file records all update activity from macro_data_updater.py.
+  Each run appends a timestamped report showing what was updated.
+========================================================================
+
+2026-02-08 05:42:54 | INFO     | ============================================================
+2026-02-08 05:42:54 | INFO     | MACRO DATA UPDATER - Starting
+2026-02-08 05:42:54 | INFO     | ============================================================
+2026-02-08 05:42:54 | ERROR    | FRED_API_KEY not set in config.env
+2026-02-08 05:42:54 | ERROR    | Get a free key at: https://fred.stlouisfed.org/docs/api/api_key.html
