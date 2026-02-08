@@ -38,6 +38,51 @@
   .header .subtitle { color: var(--text-dim); font-size: 0.85em; }
   .header .updated { color: var(--text-dim); font-size: 0.75em; margin-top: 6px; }
 
+  /* Controls bar */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--header-bg);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid var(--card-border);
+    flex-wrap: wrap;
+  }
+  .controls label { font-size: 0.8em; color: var(--text-dim); }
+  .controls input[type="text"], .controls input[type="password"] {
+    background: var(--bg);
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.82em;
+    width: 280px;
+  }
+  .controls input::placeholder { color: #556; }
+  .controls button {
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.82em;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .controls button:hover { opacity: 0.85; }
+  .btn-fetch { background: var(--accent); color: #fff; }
+  .btn-fetch:disabled { background: var(--card-border); cursor: wait; }
+  .btn-auto { background: var(--card-border); color: var(--text); }
+  .btn-auto.active { background: var(--green); color: #000; }
+  .fetch-status {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .fetch-status.error { color: var(--red); }
+  .fetch-status.success { color: var(--green); }
+
   .regime-banner {
     text-align: center;
     padding: 18px;
@@ -81,6 +126,8 @@
   .metric:last-child { border-bottom: none; }
   .metric-label { font-size: 0.82em; color: var(--text-dim); flex: 1; }
   .metric-value { font-size: 0.95em; font-weight: 600; min-width: 70px; text-align: right; margin: 0 10px; }
+  .metric-value.loading { color: var(--text-dim); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
   .metric-status {
     font-size: 0.7em;
     padding: 2px 8px;
@@ -122,7 +169,18 @@
   .portfolio-table .highlight { background: rgba(29,161,242,0.1); font-weight: bold; color: var(--accent); }
 
   .footer { text-align: center; padding: 20px; color: var(--text-dim); font-size: 0.75em; }
-  @media (max-width: 720px) { .scores-row { flex-direction: column; } .grid { grid-template-columns: 1fr; } }
+  .progress-bar { height: 3px; background: var(--card-border); border-radius: 3px; margin-bottom: 20px; overflow: hidden; display: none; }
+  .progress-bar.active { display: block; }
+  .progress-bar-fill { height: 100%; background: var(--accent); transition: width 0.3s; border-radius: 3px; }
+  .next-refresh { font-size: 0.7em; color: var(--text-dim); }
+
+  @media (max-width: 720px) {
+    .scores-row { flex-direction: column; }
+    .grid { grid-template-columns: 1fr; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .controls input[type="text"], .controls input[type="password"] { width: 100%; }
+    .fetch-status { margin-left: 0; margin-top: 4px; }
+  }
 </style>
 </head>
 <body>
@@ -133,8 +191,18 @@
   <div class="updated" id="lastUpdated">Last updated: --</div>
 </div>
 
+<div class="controls">
+  <label for="apiKey">FRED API Key:</label>
+  <input type="password" id="apiKey" placeholder="Paste your FRED API key here" autocomplete="off">
+  <button class="btn-fetch" id="fetchBtn" onclick="fetchAllData()">Fetch Live Data</button>
+  <button class="btn-auto" id="autoBtn" onclick="toggleAutoRefresh()">Auto-Refresh: OFF</button>
+  <span class="fetch-status" id="fetchStatus"></span>
+</div>
+
+<div class="progress-bar" id="progressBar"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+
 <div class="regime-banner" id="regimeBanner">
-  Loading regime data...
+  Enter your FRED API key above and click "Fetch Live Data"
 </div>
 
 <div class="scores-row">
@@ -165,46 +233,273 @@
 </div>
 
 <div class="footer">
-  Macro Economic Monitoring System &bull; Data from FRED &bull; Created February 2026
+  Macro Economic Monitoring System &bull; Data from FRED (Federal Reserve) &bull; Auto-refreshes from the FRED API
+  <br><span class="next-refresh" id="nextRefresh"></span>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// MARKET DATA - Updated by macro_data_updater.py --dashboard
-// or edit manually below
+// MARKET DATA - starts empty, populated by FRED API fetch
 // ═══════════════════════════════════════════════════════════════════
 const marketData = {
-  "fedFundsRate": 5.33,
-  "treasury10Y": 4.25,
-  "treasury2Y": 4.15,
-  "tips10Y": 1.95,
-  "breakeven10Y": 2.30,
-  "cpiYoY": 2.9,
-  "corePCE": 2.6,
-  "forward5Y5Y": 2.35,
-  "cpiMoM": 0.3,
-  "hySpread": 340,
-  "igSpread": 95,
-  "aaSpread": 55,
-  "tedSpread": 25,
-  "unemployment": 4.0,
-  "nfp": 180,
-  "initialClaims": 215,
-  "jolts": 8.7,
-  "gdpGrowth": 2.5,
-  "ismMfg": 50.5,
-  "ismSvc": 53.4,
-  "vix": 16.5,
-  "sp500": 5100,
-  "sp200dma": 4850,
-  "lastUpdated": "2026-02-08 (sample data)"
+  fedFundsRate: null, treasury10Y: null, treasury2Y: null,
+  tips10Y: null, breakeven10Y: null,
+  cpiYoY: null, corePCE: null, forward5Y5Y: null, cpiMoM: null,
+  hySpread: null, igSpread: null, aaSpread: null, tedSpread: null,
+  unemployment: null, nfp: null, initialClaims: null, jolts: null,
+  gdpGrowth: null, ismMfg: null, ismSvc: null,
+  vix: null, sp500: null,
+  lastUpdated: "--"
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// FRED API FETCHING (runs directly in the browser)
+// ═══════════════════════════════════════════════════════════════════
+const FRED_URL = "https://api.stlouisfed.org/fred/series/observations";
+
+// Series to fetch: [FRED_ID, marketData_key, transform, extra_obs_needed]
+const SERIES_MAP = [
+  ["DFF",           "fedFundsRate",  "direct",     1],
+  ["DGS10",         "treasury10Y",   "direct",     1],
+  ["DGS2",          "treasury2Y",    "direct",     1],
+  ["DFII10",        "tips10Y",       "direct",     1],
+  ["T10YIE",        "breakeven10Y",  "direct",     1],
+  ["T5YIFR",        "forward5Y5Y",   "direct",     1],
+  ["CPIAUCSL",      "cpiYoY",        "yoy",       15],
+  ["CPIAUCSL",      "cpiMoM",        "mom",       3],
+  ["PCEPILFE",      "corePCE",       "yoy",       15],
+  ["BAMLH0A0HYM2",  "hySpread",      "bp",         1],
+  ["BAMLC0A0CM",    "igSpread",      "bp",         1],
+  ["BAMLC0A3CA",    "aaSpread",      "bp",         1],
+  ["UNRATE",        "unemployment",  "direct",     1],
+  ["PAYEMS",        "nfp",           "mom_diff",   3],
+  ["ICSA",          "initialClaims", "div1000",    1],
+  ["JTSJOL",        "jolts",         "div1000",    1],
+  ["GDP",           "gdpGrowth",     "gdp_qoq",   3],
+  ["VIXCLS",        "vix",           "direct",     1],
+  ["SP500",         "sp500",         "direct",     1],
+];
+
+// Deduplicate: some FRED series are used twice (CPIAUCSL for YoY and MoM)
+function getUniqueSeries() {
+  const seen = {};
+  for (const [id, , , obs] of SERIES_MAP) {
+    if (!seen[id] || seen[id] < obs) seen[id] = obs;
+  }
+  return Object.entries(seen); // [[id, obs_needed], ...]
+}
+
+async function fetchFredSeries(seriesId, apiKey, limit) {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 450);
+  const startStr = startDate.toISOString().split("T")[0];
+
+  const params = new URLSearchParams({
+    series_id: seriesId,
+    api_key: apiKey,
+    file_type: "json",
+    sort_order: "desc",
+    limit: limit,
+    observation_start: startStr,
+  });
+
+  const resp = await fetch(`${FRED_URL}?${params}`);
+  if (!resp.ok) {
+    if (resp.status === 400) {
+      const err = await resp.json();
+      throw new Error(err.error_message || "Bad request");
+    }
+    throw new Error(`HTTP ${resp.status}`);
+  }
+  const data = await resp.json();
+  return (data.observations || []).filter(o => o.value !== "." && o.value !== "");
+}
+
+// Transform functions
+function transform(obs, type) {
+  if (!obs || obs.length === 0) return null;
+  const latest = parseFloat(obs[0].value);
+  if (isNaN(latest)) return null;
+
+  switch(type) {
+    case "direct":
+      return Math.round(latest * 100) / 100;
+
+    case "bp":
+      return Math.round(latest * 100);
+
+    case "div1000":
+      return Math.round(latest / 1000 * 100) / 100;
+
+    case "mom_diff":
+      if (obs.length < 2) return null;
+      const prev = parseFloat(obs[1].value);
+      return isNaN(prev) ? null : Math.round((latest - prev) * 10) / 10;
+
+    case "yoy": {
+      const latestDate = new Date(obs[0].date);
+      const targetDate = new Date(latestDate);
+      targetDate.setFullYear(targetDate.getFullYear() - 1);
+      let bestMatch = null, bestDiff = Infinity;
+      for (const o of obs) {
+        const d = new Date(o.date);
+        const diff = Math.abs(d - targetDate);
+        if (diff < bestDiff) { bestDiff = diff; bestMatch = o; }
+      }
+      if (bestMatch && bestDiff < 45 * 86400000) {
+        const yearAgo = parseFloat(bestMatch.value);
+        if (!isNaN(yearAgo) && yearAgo !== 0)
+          return Math.round(((latest - yearAgo) / yearAgo) * 10000) / 100;
+      }
+      return null;
+    }
+
+    case "mom": {
+      if (obs.length < 2) return null;
+      const prevVal = parseFloat(obs[1].value);
+      if (isNaN(prevVal) || prevVal === 0) return null;
+      return Math.round(((latest - prevVal) / prevVal) * 10000) / 100;
+    }
+
+    case "gdp_qoq": {
+      if (obs.length < 2) return null;
+      const prevGdp = parseFloat(obs[1].value);
+      if (isNaN(prevGdp) || prevGdp === 0) return null;
+      const qoq = (latest - prevGdp) / prevGdp;
+      return Math.round(((1 + qoq) ** 4 - 1) * 1000) / 10;
+    }
+
+    default: return latest;
+  }
+}
+
+let isFetching = false;
+
+async function fetchAllData() {
+  const apiKeyInput = document.getElementById("apiKey");
+  const apiKey = apiKeyInput.value.trim();
+  if (!apiKey) {
+    setStatus("Enter your FRED API key first", "error");
+    apiKeyInput.focus();
+    return;
+  }
+
+  // Save key to localStorage so they don't have to re-enter it
+  localStorage.setItem("fred_api_key", apiKey);
+
+  if (isFetching) return;
+  isFetching = true;
+
+  const btn = document.getElementById("fetchBtn");
+  btn.disabled = true;
+  btn.textContent = "Fetching...";
+  setStatus("Connecting to FRED API...", "");
+
+  const progressBar = document.getElementById("progressBar");
+  const progressFill = document.getElementById("progressFill");
+  progressBar.classList.add("active");
+  progressFill.style.width = "0%";
+
+  const uniqueSeries = getUniqueSeries();
+  const rawData = {}; // seriesId -> observations
+  let completed = 0;
+  let errors = 0;
+
+  // Fetch all series (with small delay to be nice to FRED)
+  for (const [seriesId, obsNeeded] of uniqueSeries) {
+    try {
+      setStatus(`Fetching ${seriesId}... (${completed + 1}/${uniqueSeries.length})`, "");
+      rawData[seriesId] = await fetchFredSeries(seriesId, apiKey, obsNeeded);
+      completed++;
+    } catch (e) {
+      console.warn(`Failed to fetch ${seriesId}:`, e.message);
+      errors++;
+      completed++;
+    }
+    progressFill.style.width = Math.round((completed / uniqueSeries.length) * 100) + "%";
+    // Small delay between requests to respect rate limits
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  // Apply transforms and update marketData
+  for (const [seriesId, dataKey, transformType] of SERIES_MAP) {
+    if (rawData[seriesId]) {
+      const val = transform(rawData[seriesId], transformType);
+      if (val !== null) marketData[dataKey] = val;
+    }
+  }
+
+  marketData.lastUpdated = new Date().toLocaleString();
+
+  // Save data to localStorage for offline access
+  localStorage.setItem("macro_dashboard_data", JSON.stringify(marketData));
+
+  render();
+
+  progressBar.classList.remove("active");
+  btn.disabled = false;
+  btn.textContent = "Fetch Live Data";
+  isFetching = false;
+
+  if (errors === 0) {
+    setStatus(`All ${uniqueSeries.length} series fetched successfully`, "success");
+  } else {
+    setStatus(`${uniqueSeries.length - errors} fetched, ${errors} failed`, errors > uniqueSeries.length / 2 ? "error" : "success");
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// AUTO-REFRESH
+// ═══════════════════════════════════════════════════════════════════
+let autoRefreshInterval = null;
+let nextRefreshTime = null;
+let countdownInterval = null;
+const AUTO_REFRESH_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+function toggleAutoRefresh() {
+  const btn = document.getElementById("autoBtn");
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    clearInterval(countdownInterval);
+    autoRefreshInterval = null;
+    nextRefreshTime = null;
+    btn.textContent = "Auto-Refresh: OFF";
+    btn.classList.remove("active");
+    document.getElementById("nextRefresh").textContent = "";
+    localStorage.removeItem("auto_refresh_on");
+  } else {
+    autoRefreshInterval = setInterval(() => fetchAllData(), AUTO_REFRESH_MS);
+    nextRefreshTime = Date.now() + AUTO_REFRESH_MS;
+    btn.textContent = "Auto-Refresh: ON (4h)";
+    btn.classList.add("active");
+    localStorage.setItem("auto_refresh_on", "true");
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 60000);
+  }
+}
+
+function updateCountdown() {
+  if (!nextRefreshTime) return;
+  const remaining = nextRefreshTime - Date.now();
+  if (remaining <= 0) {
+    nextRefreshTime = Date.now() + AUTO_REFRESH_MS;
+    return;
+  }
+  const hours = Math.floor(remaining / 3600000);
+  const mins = Math.floor((remaining % 3600000) / 60000);
+  document.getElementById("nextRefresh").textContent = `Next auto-refresh in ${hours}h ${mins}m`;
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById("fetchStatus");
+  el.textContent = msg;
+  el.className = "fetch-status" + (type ? " " + type : "");
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // THRESHOLD DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════
 function getStatus(value, thresholds) {
-  // thresholds: [{max, label, color}, ...] sorted ascending
   for (const t of thresholds) {
     if (t.min !== undefined && t.max !== undefined) {
       if (value >= t.min && value <= t.max) return { label: t.label, color: t.color };
@@ -227,8 +522,11 @@ const sections = [
         thresholds: [{max: 3.0, label: "Low", color: "green"}, {max: 4.5, label: "Normal", color: "yellow"}, {min: 4.5, label: "High", color: "orange"}]},
       { label: "2-Year Treasury", key: "treasury2Y", suffix: "%",
         thresholds: [{max: 3.0, label: "Low", color: "green"}, {max: 4.5, label: "Normal", color: "yellow"}, {min: 4.5, label: "High", color: "orange"}]},
-      { label: "Yield Curve (10Y-2Y)", value: ((marketData.treasury10Y - marketData.treasury2Y) * 100).toFixed(0) + " bp",
-        thresholds_value: (marketData.treasury10Y - marketData.treasury2Y) * 100,
+      { label: "Yield Curve (10Y-2Y)", computed: () => {
+          if (marketData.treasury10Y == null || marketData.treasury2Y == null) return {val: null, display: "N/A"};
+          const v = (marketData.treasury10Y - marketData.treasury2Y) * 100;
+          return {val: v, display: v.toFixed(0) + " bp"};
+        },
         thresholds: [{max: 0, label: "INVERTED", color: "red"}, {max: 50, label: "Flat", color: "yellow"}, {min: 50, label: "Normal", color: "green"}]},
       { label: "10-Year TIPS (Real)", key: "tips10Y", suffix: "%",
         thresholds: [{max: 0, label: "Loose", color: "green"}, {max: 0.5, label: "Moderate", color: "yellow"}, {max: 2.0, label: "Tight", color: "orange"}, {min: 2.0, label: "Very Tight", color: "red"}]},
@@ -243,6 +541,8 @@ const sections = [
         thresholds: [{max: 2.0, label: "Low", color: "green"}, {max: 3.0, label: "Normal", color: "yellow"}, {max: 5.0, label: "Elevated", color: "orange"}, {min: 5.0, label: "Very High", color: "red"}]},
       { label: "Core PCE (Fed Target)", key: "corePCE", suffix: "%",
         thresholds: [{max: 1.5, label: "Below Target", color: "blue"}, {max: 2.5, label: "At Target", color: "green"}, {max: 4.0, label: "Above Target", color: "orange"}, {min: 4.0, label: "Very High", color: "red"}]},
+      { label: "CPI Month-over-Month", key: "cpiMoM", suffix: "%",
+        thresholds: [{max: 0.2, label: "Cool", color: "green"}, {max: 0.4, label: "Warm", color: "yellow"}, {min: 0.4, label: "Hot", color: "red"}]},
       { label: "5Y5Y Forward Inflation", key: "forward5Y5Y", suffix: "%",
         thresholds: [{max: 2.0, label: "Unanchored Low", color: "blue"}, {max: 3.0, label: "Anchored", color: "green"}, {min: 3.0, label: "Unanchored High", color: "red"}]},
     ]
@@ -254,8 +554,8 @@ const sections = [
         thresholds: [{max: 300, label: "Tight", color: "blue"}, {max: 400, label: "Normal", color: "green"}, {max: 600, label: "Elevated", color: "orange"}, {min: 600, label: "STRESS", color: "red"}]},
       { label: "IG OAS Spread", key: "igSpread", suffix: " bp",
         thresholds: [{max: 80, label: "Tight", color: "blue"}, {max: 130, label: "Normal", color: "green"}, {max: 200, label: "Elevated", color: "orange"}, {min: 200, label: "STRESS", color: "red"}]},
-      { label: "TED Spread", key: "tedSpread", suffix: " bp",
-        thresholds: [{max: 50, label: "Normal", color: "green"}, {max: 100, label: "Elevated", color: "orange"}, {min: 100, label: "Banking Stress", color: "red"}]},
+      { label: "AA OAS Spread", key: "aaSpread", suffix: " bp",
+        thresholds: [{max: 60, label: "Normal", color: "green"}, {max: 100, label: "Elevated", color: "orange"}, {min: 100, label: "Stress", color: "red"}]},
     ]
   },
   {
@@ -263,10 +563,12 @@ const sections = [
     metrics: [
       { label: "Unemployment Rate", key: "unemployment", suffix: "%",
         thresholds: [{max: 3.5, label: "Tight", color: "blue"}, {max: 5.0, label: "Normal", color: "green"}, {max: 6.0, label: "Weakening", color: "orange"}, {min: 6.0, label: "Recession", color: "red"}]},
-      { label: "Nonfarm Payrolls", key: "nfp", suffix: "k",
+      { label: "Nonfarm Payrolls (MoM)", key: "nfp", suffix: "k",
         thresholds: [{max: 0, label: "Contraction", color: "red"}, {max: 100, label: "Slowing", color: "orange"}, {max: 250, label: "Normal", color: "green"}, {min: 250, label: "Strong", color: "blue"}]},
       { label: "Initial Claims", key: "initialClaims", suffix: "k",
         thresholds: [{max: 250, label: "Normal", color: "green"}, {max: 300, label: "Elevated", color: "orange"}, {min: 300, label: "Recession Risk", color: "red"}]},
+      { label: "JOLTS Openings", key: "jolts", suffix: "M",
+        thresholds: [{max: 7, label: "Weak", color: "orange"}, {max: 9, label: "Normal", color: "green"}, {min: 9, label: "Very Tight", color: "blue"}]},
     ]
   },
   {
@@ -274,10 +576,6 @@ const sections = [
     metrics: [
       { label: "GDP Growth (QoQ Ann.)", key: "gdpGrowth", suffix: "%",
         thresholds: [{max: 0, label: "Contraction", color: "red"}, {max: 1.0, label: "Stall Speed", color: "orange"}, {max: 3.0, label: "Normal", color: "green"}, {min: 3.0, label: "Strong", color: "blue"}]},
-      { label: "ISM Manufacturing", key: "ismMfg", suffix: "",
-        thresholds: [{max: 45, label: "Deep Contraction", color: "red"}, {max: 50, label: "Contraction", color: "orange"}, {max: 55, label: "Expansion", color: "green"}, {min: 55, label: "Strong", color: "blue"}]},
-      { label: "ISM Services", key: "ismSvc", suffix: "",
-        thresholds: [{max: 45, label: "Deep Contraction", color: "red"}, {max: 50, label: "Contraction", color: "orange"}, {max: 55, label: "Expansion", color: "green"}, {min: 55, label: "Strong", color: "blue"}]},
     ]
   },
   {
@@ -297,22 +595,21 @@ const sections = [
 function computeScores() {
   const d = marketData;
   let inflationScore = 0;
-  if (d.cpiYoY > 3) inflationScore++;
-  if (d.corePCE > 2.5) inflationScore++;
-  if (d.breakeven10Y > 2.5) inflationScore++;
-  if (d.forward5Y5Y > 2.8) inflationScore++;
+  if (d.cpiYoY != null && d.cpiYoY > 3) inflationScore++;
+  if (d.corePCE != null && d.corePCE > 2.5) inflationScore++;
+  if (d.breakeven10Y != null && d.breakeven10Y > 2.5) inflationScore++;
+  if (d.forward5Y5Y != null && d.forward5Y5Y > 2.8) inflationScore++;
 
   let growthScore = 0;
-  if (d.gdpGrowth > 2) growthScore++;
-  if (d.ismMfg > 50) growthScore++;
-  if (d.ismSvc > 50) growthScore++;
-  if (d.unemployment < 5) growthScore++;
+  if (d.gdpGrowth != null && d.gdpGrowth > 2) growthScore++;
+  if (d.ismMfg != null && d.ismMfg > 50) growthScore++;
+  if (d.ismSvc != null && d.ismSvc > 50) growthScore++;
+  if (d.unemployment != null && d.unemployment < 5) growthScore++;
 
   let creditScore = 0;
-  if (d.hySpread > 500) creditScore++;
-  if (d.igSpread > 150) creditScore++;
-  if (d.tedSpread > 75) creditScore++;
-  if (d.vix > 25) creditScore++;
+  if (d.hySpread != null && d.hySpread > 500) creditScore++;
+  if (d.igSpread != null && d.igSpread > 150) creditScore++;
+  if (d.vix != null && d.vix > 25) creditScore++;
 
   return { inflationScore, growthScore, creditScore };
 }
@@ -333,10 +630,8 @@ function detectRegime(scores) {
 // RENDER
 // ═══════════════════════════════════════════════════════════════════
 function render() {
-  // Update timestamp
   document.getElementById("lastUpdated").textContent = "Last updated: " + marketData.lastUpdated;
 
-  // Scores
   const scores = computeScores();
   const scoreColors = [
     {id: "inflationScore", val: scores.inflationScore, thresholds: [{max:1,color:"green"},{max:2,color:"yellow"},{min:3,color:"red"}]},
@@ -350,13 +645,11 @@ function render() {
     el.style.color = `var(--${st.color})`;
   }
 
-  // Regime
   const { regime, css, implication } = detectRegime(scores);
   const banner = document.getElementById("regimeBanner");
   banner.className = "regime-banner regime-" + css;
   banner.innerHTML = "REGIME: " + regime + '<span class="regime-implication">' + implication + '</span>';
 
-  // Metrics grid
   const grid = document.getElementById("metricsGrid");
   grid.innerHTML = "";
   for (const section of sections) {
@@ -365,17 +658,23 @@ function render() {
     let html = "<h2>" + section.title + "</h2>";
     for (const m of section.metrics) {
       let val, displayVal;
-      if (m.value !== undefined) {
-        displayVal = m.value;
-        val = m.thresholds_value;
+      if (m.computed) {
+        const result = m.computed();
+        val = result.val;
+        displayVal = result.display;
       } else {
         val = marketData[m.key];
-        displayVal = (typeof val === "number") ? (Number.isInteger(val) ? val : val.toFixed(2)) + (m.suffix || "") : "N/A";
+        if (val == null) {
+          displayVal = "--";
+        } else {
+          displayVal = (Number.isInteger(val) ? val : val.toFixed(2)) + (m.suffix || "");
+        }
       }
-      const status = (typeof val === "number") ? getStatus(val, m.thresholds) : { label: "N/A", color: "blue" };
+      const status = (typeof val === "number") ? getStatus(val, m.thresholds) : { label: "--", color: "blue" };
+      const loadingClass = val == null ? " loading" : "";
       html += '<div class="metric">' +
         '<span class="metric-label">' + m.label + '</span>' +
-        '<span class="metric-value">' + displayVal + '</span>' +
+        '<span class="metric-value' + loadingClass + '">' + displayVal + '</span>' +
         '<span class="metric-status status-' + status.color + '">' + status.label + '</span>' +
         '</div>';
     }
@@ -416,7 +715,31 @@ function render() {
   table.innerHTML = thtml;
 }
 
-render();
+// ═══════════════════════════════════════════════════════════════════
+// STARTUP - restore saved data and API key
+// ═══════════════════════════════════════════════════════════════════
+(function init() {
+  // Restore API key
+  const savedKey = localStorage.getItem("fred_api_key");
+  if (savedKey) document.getElementById("apiKey").value = savedKey;
+
+  // Restore last fetched data
+  const savedData = localStorage.getItem("macro_dashboard_data");
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      Object.assign(marketData, parsed);
+      setStatus("Showing cached data. Click Fetch for latest.", "");
+    } catch (e) { /* ignore */ }
+  }
+
+  // Restore auto-refresh
+  if (localStorage.getItem("auto_refresh_on") === "true") {
+    toggleAutoRefresh();
+  }
+
+  render();
+})();
 </script>
 </body>
 </html>
