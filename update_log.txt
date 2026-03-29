@@ -1,0 +1,170 @@
+========================================================================
+  MACRO DATA UPDATER - LOG FILE
+========================================================================
+  This file records all update activity from macro_data_updater.py.
+  Each run appends a timestamped report showing what was updated.
+========================================================================
+
+2026-02-08 05:42:54 | INFO     | ============================================================
+2026-02-08 05:42:54 | INFO     | MACRO DATA UPDATER - Starting
+2026-02-08 05:42:54 | INFO     | ============================================================
+2026-02-08 05:42:54 | ERROR    | FRED_API_KEY not set in config.env
+2026-02-08 05:42:54 | ERROR    | Get a free key at: https://fred.stlouisfed.org/docs/api/api_key.html
+2026-02-08 16:06:33 | INFO     | ============================================================
+2026-02-08 16:06:33 | INFO     | MACRO DATA UPDATER - Starting
+2026-02-08 16:06:33 | INFO     | ============================================================
+2026-02-08 16:06:33 | INFO     | Fetching 19 series from FRED...
+2026-02-08 16:06:33 | DEBUG    | Fetching DFF (attempt 1/3)
+2026-02-08 16:06:33 | WARNING  | Connection error for DFF (attempt 1)
+2026-02-08 16:06:35 | DEBUG    | Fetching DFF (attempt 2/3)
+2026-02-08 16:06:35 | WARNING  | Connection error for DFF (attempt 2)
+2026-02-08 16:06:39 | DEBUG    | Fetching DFF (attempt 3/3)
+2026-02-08 16:06:39 | WARNING  | Connection error for DFF (attempt 3)
+2026-02-08 16:06:39 | ERROR    | Failed to fetch DFF after 3 attempts
+2026-02-08 16:06:39 | WARNING  |   FAIL DFF              no data returned
+2026-02-08 16:06:39 | DEBUG    | Fetching DGS10 (attempt 1/3)
+2026-02-08 16:06:39 | WARNING  | Connection error for DGS10 (attempt 1)
+2026-02-08 16:06:41 | DEBUG    | Fetching DGS10 (attempt 2/3)
+2026-02-08 16:06:41 | WARNING  | Connection error for DGS10 (attempt 2)
+2026-02-08 16:06:45 | DEBUG    | Fetching DGS10 (attempt 3/3)
+2026-02-08 16:06:45 | WARNING  | Connection error for DGS10 (attempt 3)
+2026-02-08 16:06:45 | ERROR    | Failed to fetch DGS10 after 3 attempts
+2026-02-08 16:06:45 | WARNING  |   FAIL DGS10            no data returned
+2026-02-08 16:06:46 | DEBUG    | Fetching DGS2 (attempt 1/3)
+2026-02-08 16:06:46 | WARNING  | Connection error for DGS2 (attempt 1)
+2026-02-08 16:06:48 | DEBUG    | Fetching DGS2 (attempt 2/3)
+2026-02-08 16:06:48 | WARNING  | Connection error for DGS2 (attempt 2)
+2026-02-08 16:06:52 | DEBUG    | Fetching DGS2 (attempt 3/3)
+2026-02-08 16:06:52 | WARNING  | Connection error for DGS2 (attempt 3)
+2026-02-08 16:06:52 | ERROR    | Failed to fetch DGS2 after 3 attempts
+2026-02-08 16:06:52 | WARNING  |   FAIL DGS2             no data returned
+2026-02-08 16:06:52 | DEBUG    | Fetching DFII10 (attempt 1/3)
+2026-02-08 16:06:52 | WARNING  | Connection error for DFII10 (attempt 1)
+2026-02-08 16:06:54 | DEBUG    | Fetching DFII10 (attempt 2/3)
+2026-02-08 16:06:54 | WARNING  | Connection error for DFII10 (attempt 2)
+2026-02-08 16:06:58 | DEBUG    | Fetching DFII10 (attempt 3/3)
+2026-02-08 16:06:58 | WARNING  | Connection error for DFII10 (attempt 3)
+2026-02-08 16:06:58 | ERROR    | Failed to fetch DFII10 after 3 attempts
+2026-02-08 16:06:58 | WARNING  |   FAIL DFII10           no data returned
+2026-02-08 16:06:59 | DEBUG    | Fetching T10YIE (attempt 1/3)
+2026-02-08 16:06:59 | WARNING  | Connection error for T10YIE (attempt 1)
+2026-02-08 16:07:01 | DEBUG    | Fetching T10YIE (attempt 2/3)
+2026-02-08 16:07:01 | WARNING  | Connection error for T10YIE (attempt 2)
+2026-02-08 16:07:05 | DEBUG    | Fetching T10YIE (attempt 3/3)
+2026-02-08 16:07:05 | WARNING  | Connection error for T10YIE (attempt 3)
+2026-02-08 16:07:05 | ERROR    | Failed to fetch T10YIE after 3 attempts
+2026-02-08 16:07:05 | WARNING  |   FAIL T10YIE           no data returned
+2026-02-08 16:07:06 | DEBUG    | Fetching T5YIFR (attempt 1/3)
+2026-02-08 16:07:06 | WARNING  | Connection error for T5YIFR (attempt 1)
+2026-02-08 16:07:08 | DEBUG    | Fetching T5YIFR (attempt 2/3)
+2026-02-08 16:07:08 | WARNING  | Connection error for T5YIFR (attempt 2)
+2026-02-08 16:07:12 | DEBUG    | Fetching T5YIFR (attempt 3/3)
+2026-02-08 16:07:12 | WARNING  | Connection error for T5YIFR (attempt 3)
+2026-02-08 16:07:12 | ERROR    | Failed to fetch T5YIFR after 3 attempts
+2026-02-08 16:07:12 | WARNING  |   FAIL T5YIFR           no data returned
+2026-02-08 16:07:12 | DEBUG    | Fetching CPIAUCSL (attempt 1/3)
+2026-02-08 16:07:12 | WARNING  | Connection error for CPIAUCSL (attempt 1)
+2026-02-08 16:07:14 | DEBUG    | Fetching CPIAUCSL (attempt 2/3)
+2026-02-08 16:07:14 | WARNING  | Connection error for CPIAUCSL (attempt 2)
+2026-02-08 16:07:18 | DEBUG    | Fetching CPIAUCSL (attempt 3/3)
+2026-02-08 16:07:18 | WARNING  | Connection error for CPIAUCSL (attempt 3)
+2026-02-08 16:07:18 | ERROR    | Failed to fetch CPIAUCSL after 3 attempts
+2026-02-08 16:07:18 | WARNING  |   FAIL CPIAUCSL         no data returned
+2026-02-08 16:07:19 | DEBUG    | Fetching PCEPILFE (attempt 1/3)
+2026-02-08 16:07:19 | WARNING  | Connection error for PCEPILFE (attempt 1)
+2026-02-08 16:07:21 | DEBUG    | Fetching PCEPILFE (attempt 2/3)
+2026-02-08 16:07:21 | WARNING  | Connection error for PCEPILFE (attempt 2)
+2026-02-08 16:07:25 | DEBUG    | Fetching PCEPILFE (attempt 3/3)
+2026-02-08 16:07:25 | WARNING  | Connection error for PCEPILFE (attempt 3)
+2026-02-08 16:07:25 | ERROR    | Failed to fetch PCEPILFE after 3 attempts
+2026-02-08 16:07:25 | WARNING  |   FAIL PCEPILFE         no data returned
+2026-02-08 16:07:26 | DEBUG    | Fetching BAMLH0A0HYM2 (attempt 1/3)
+2026-02-08 16:07:26 | WARNING  | Connection error for BAMLH0A0HYM2 (attempt 1)
+2026-02-08 16:07:28 | DEBUG    | Fetching BAMLH0A0HYM2 (attempt 2/3)
+2026-02-08 16:07:28 | WARNING  | Connection error for BAMLH0A0HYM2 (attempt 2)
+2026-02-08 16:07:32 | DEBUG    | Fetching BAMLH0A0HYM2 (attempt 3/3)
+2026-02-08 16:07:32 | WARNING  | Connection error for BAMLH0A0HYM2 (attempt 3)
+2026-02-08 16:07:32 | ERROR    | Failed to fetch BAMLH0A0HYM2 after 3 attempts
+2026-02-08 16:07:32 | WARNING  |   FAIL BAMLH0A0HYM2     no data returned
+2026-02-08 16:07:32 | DEBUG    | Fetching BAMLC0A0CM (attempt 1/3)
+2026-02-08 16:07:32 | WARNING  | Connection error for BAMLC0A0CM (attempt 1)
+2026-02-08 16:07:34 | DEBUG    | Fetching BAMLC0A0CM (attempt 2/3)
+2026-02-08 16:07:34 | WARNING  | Connection error for BAMLC0A0CM (attempt 2)
+2026-02-08 16:07:38 | DEBUG    | Fetching BAMLC0A0CM (attempt 3/3)
+2026-02-08 16:07:38 | WARNING  | Connection error for BAMLC0A0CM (attempt 3)
+2026-02-08 16:07:38 | ERROR    | Failed to fetch BAMLC0A0CM after 3 attempts
+2026-02-08 16:07:38 | WARNING  |   FAIL BAMLC0A0CM       no data returned
+2026-02-08 16:07:39 | DEBUG    | Fetching BAMLC0A3CA (attempt 1/3)
+2026-02-08 16:07:39 | WARNING  | Connection error for BAMLC0A3CA (attempt 1)
+2026-02-08 16:07:41 | DEBUG    | Fetching BAMLC0A3CA (attempt 2/3)
+2026-02-08 16:07:41 | WARNING  | Connection error for BAMLC0A3CA (attempt 2)
+2026-02-08 16:07:45 | DEBUG    | Fetching BAMLC0A3CA (attempt 3/3)
+2026-02-08 16:07:45 | WARNING  | Connection error for BAMLC0A3CA (attempt 3)
+2026-02-08 16:07:45 | ERROR    | Failed to fetch BAMLC0A3CA after 3 attempts
+2026-02-08 16:07:45 | WARNING  |   FAIL BAMLC0A3CA       no data returned
+2026-02-08 16:07:45 | DEBUG    | Fetching TEDRATE (attempt 1/3)
+2026-02-08 16:07:45 | WARNING  | Connection error for TEDRATE (attempt 1)
+2026-02-08 16:07:47 | DEBUG    | Fetching TEDRATE (attempt 2/3)
+2026-02-08 16:07:47 | WARNING  | Connection error for TEDRATE (attempt 2)
+2026-02-08 16:07:51 | DEBUG    | Fetching TEDRATE (attempt 3/3)
+2026-02-08 16:07:51 | WARNING  | Connection error for TEDRATE (attempt 3)
+2026-02-08 16:07:51 | ERROR    | Failed to fetch TEDRATE after 3 attempts
+2026-02-08 16:07:51 | WARNING  |   FAIL TEDRATE          no data returned
+2026-02-08 16:07:52 | DEBUG    | Fetching UNRATE (attempt 1/3)
+2026-02-08 16:07:52 | WARNING  | Connection error for UNRATE (attempt 1)
+2026-02-08 16:07:54 | DEBUG    | Fetching UNRATE (attempt 2/3)
+2026-02-08 16:07:54 | WARNING  | Connection error for UNRATE (attempt 2)
+2026-02-08 16:07:58 | DEBUG    | Fetching UNRATE (attempt 3/3)
+2026-02-08 16:07:58 | WARNING  | Connection error for UNRATE (attempt 3)
+2026-02-08 16:07:58 | ERROR    | Failed to fetch UNRATE after 3 attempts
+2026-02-08 16:07:58 | WARNING  |   FAIL UNRATE           no data returned
+2026-02-08 16:07:59 | DEBUG    | Fetching PAYEMS (attempt 1/3)
+2026-02-08 16:07:59 | WARNING  | Connection error for PAYEMS (attempt 1)
+2026-02-08 16:08:01 | DEBUG    | Fetching PAYEMS (attempt 2/3)
+2026-02-08 16:08:01 | WARNING  | Connection error for PAYEMS (attempt 2)
+2026-02-08 16:08:05 | DEBUG    | Fetching PAYEMS (attempt 3/3)
+2026-02-08 16:08:05 | WARNING  | Connection error for PAYEMS (attempt 3)
+2026-02-08 16:08:05 | ERROR    | Failed to fetch PAYEMS after 3 attempts
+2026-02-08 16:08:05 | WARNING  |   FAIL PAYEMS           no data returned
+2026-02-08 16:08:05 | DEBUG    | Fetching ICSA (attempt 1/3)
+2026-02-08 16:08:05 | WARNING  | Connection error for ICSA (attempt 1)
+2026-02-08 16:08:07 | DEBUG    | Fetching ICSA (attempt 2/3)
+2026-02-08 16:08:07 | WARNING  | Connection error for ICSA (attempt 2)
+2026-02-08 16:08:11 | DEBUG    | Fetching ICSA (attempt 3/3)
+2026-02-08 16:08:11 | WARNING  | Connection error for ICSA (attempt 3)
+2026-02-08 16:08:11 | ERROR    | Failed to fetch ICSA after 3 attempts
+2026-02-08 16:08:11 | WARNING  |   FAIL ICSA             no data returned
+2026-02-08 16:08:12 | DEBUG    | Fetching JTSJOL (attempt 1/3)
+2026-02-08 16:08:12 | WARNING  | Connection error for JTSJOL (attempt 1)
+2026-02-08 16:08:14 | DEBUG    | Fetching JTSJOL (attempt 2/3)
+2026-02-08 16:08:14 | WARNING  | Connection error for JTSJOL (attempt 2)
+2026-02-08 16:08:18 | DEBUG    | Fetching JTSJOL (attempt 3/3)
+2026-02-08 16:08:18 | WARNING  | Connection error for JTSJOL (attempt 3)
+2026-02-08 16:08:18 | ERROR    | Failed to fetch JTSJOL after 3 attempts
+2026-02-08 16:08:18 | WARNING  |   FAIL JTSJOL           no data returned
+2026-02-08 16:08:18 | DEBUG    | Fetching GDP (attempt 1/3)
+2026-02-08 16:08:18 | WARNING  | Connection error for GDP (attempt 1)
+2026-02-08 16:08:20 | DEBUG    | Fetching GDP (attempt 2/3)
+2026-02-08 16:08:20 | WARNING  | Connection error for GDP (attempt 2)
+2026-02-08 16:08:24 | DEBUG    | Fetching GDP (attempt 3/3)
+2026-02-08 16:08:24 | WARNING  | Connection error for GDP (attempt 3)
+2026-02-08 16:08:24 | ERROR    | Failed to fetch GDP after 3 attempts
+2026-02-08 16:08:24 | WARNING  |   FAIL GDP              no data returned
+2026-02-08 16:08:25 | DEBUG    | Fetching VIXCLS (attempt 1/3)
+2026-02-08 16:08:25 | WARNING  | Connection error for VIXCLS (attempt 1)
+2026-02-08 16:08:27 | DEBUG    | Fetching VIXCLS (attempt 2/3)
+2026-02-08 16:08:27 | WARNING  | Connection error for VIXCLS (attempt 2)
+2026-02-08 16:08:31 | DEBUG    | Fetching VIXCLS (attempt 3/3)
+2026-02-08 16:08:31 | WARNING  | Connection error for VIXCLS (attempt 3)
+2026-02-08 16:08:31 | ERROR    | Failed to fetch VIXCLS after 3 attempts
+2026-02-08 16:08:31 | WARNING  |   FAIL VIXCLS           no data returned
+2026-02-08 16:08:32 | DEBUG    | Fetching SP500 (attempt 1/3)
+2026-02-08 16:08:32 | WARNING  | Connection error for SP500 (attempt 1)
+2026-02-08 16:08:34 | DEBUG    | Fetching SP500 (attempt 2/3)
+2026-02-08 16:08:34 | WARNING  | Connection error for SP500 (attempt 2)
+2026-02-08 16:08:38 | DEBUG    | Fetching SP500 (attempt 3/3)
+2026-02-08 16:08:38 | WARNING  | Connection error for SP500 (attempt 3)
+2026-02-08 16:08:38 | ERROR    | Failed to fetch SP500 after 3 attempts
+2026-02-08 16:08:38 | WARNING  |   FAIL SP500            no data returned
+2026-02-08 16:08:38 | INFO     | Fetched 0/19 series successfully
+2026-02-08 16:08:38 | ERROR    | No data fetched. Check your API key and network connection.

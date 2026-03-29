@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Economic Monitoring Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1923;
+    --card-bg: #1a2733;
+    --card-border: #2a3f50;
+    --text: #e0e6ed;
+    --text-dim: #8899a6;
+    --accent: #1da1f2;
+    --green: #00c853;
+    --yellow: #ffd600;
+    --orange: #ff9100;
+    --red: #ff1744;
+    --header-bg: #15202b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 16px;
+  }
+  .header {
+    text-align: center;
+    padding: 20px;
+    background: var(--header-bg);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid var(--card-border);
+  }
+  .header h1 { font-size: 1.6em; color: var(--accent); margin-bottom: 4px; }
+  .header .subtitle { color: var(--text-dim); font-size: 0.85em; }
+  .header .updated { color: var(--text-dim); font-size: 0.75em; margin-top: 6px; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--header-bg);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid var(--card-border);
+    flex-wrap: wrap;
+  }
+  .controls button {
+    padding: 8px 20px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .controls button:hover { opacity: 0.85; }
+  .btn-fetch { background: var(--accent); color: #fff; }
+  .btn-fetch:disabled { background: var(--card-border); cursor: wait; }
+  .fetch-status {
+    font-size: 0.78em;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .fetch-status.error { color: var(--red); }
+  .fetch-status.success { color: var(--green); }
+
+  .progress-bar { height: 4px; background: var(--card-border); border-radius: 3px; margin-bottom: 20px; overflow: hidden; display: none; }
+  .progress-bar.active { display: block; }
+  .progress-bar-fill { height: 100%; background: var(--accent); transition: width 0.3s; border-radius: 3px; width: 0%; }
+
+  .regime-banner {
+    text-align: center;
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+    font-weight: bold;
+    border: 2px solid;
+  }
+  .regime-goldilocks { background: rgba(0,200,83,0.12); border-color: var(--green); color: var(--green); }
+  .regime-inflation { background: rgba(255,145,0,0.12); border-color: var(--orange); color: var(--orange); }
+  .regime-stagflation { background: rgba(255,23,68,0.12); border-color: var(--red); color: var(--red); }
+  .regime-slowdown { background: rgba(255,214,0,0.12); border-color: var(--yellow); color: var(--yellow); }
+  .regime-bust { background: rgba(255,23,68,0.12); border-color: var(--red); color: var(--red); }
+  .regime-normal { background: rgba(29,161,242,0.12); border-color: var(--accent); color: var(--accent); }
+  .regime-implication { font-size: 0.55em; font-weight: normal; display: block; margin-top: 6px; color: var(--text-dim); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .card h2 {
+    font-size: 0.85em;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(42,63,80,0.5);
+  }
+  .metric:last-child { border-bottom: none; }
+  .metric-label { font-size: 0.82em; color: var(--text-dim); flex: 1; }
+  .metric-value { font-size: 0.95em; font-weight: 600; min-width: 70px; text-align: right; margin: 0 10px; }
+  .metric-value.loading { color: var(--text-dim); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+  .metric-status {
+    font-size: 0.7em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    min-width: 90px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .status-green  { background: rgba(0,200,83,0.15); color: var(--green); }
+  .status-yellow { background: rgba(255,214,0,0.15); color: var(--yellow); }
+  .status-orange { background: rgba(255,145,0,0.15); color: var(--orange); }
+  .status-red    { background: rgba(255,23,68,0.15); color: var(--red); }
+  .status-blue   { background: rgba(29,161,242,0.15); color: var(--accent); }
+
+  .scores-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .score-card {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .score-card h3 { font-size: 0.75em; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .score-value { font-size: 2em; font-weight: bold; margin: 6px 0; }
+  .score-label { font-size: 0.75em; color: var(--text-dim); }
+
+  .portfolio-table { width: 100%; border-collapse: collapse; font-size: 0.82em; }
+  .portfolio-table th {
+    background: var(--header-bg);
+    color: var(--accent);
+    padding: 8px;
+    text-align: center;
+    font-size: 0.8em;
+    text-transform: uppercase;
+  }
+  .portfolio-table td { padding: 6px 8px; border-bottom: 1px solid var(--card-border); text-align: center; }
+  .portfolio-table td:first-child { text-align: left; font-weight: 600; }
+  .portfolio-table .highlight { background: rgba(29,161,242,0.1); font-weight: bold; color: var(--accent); }
+
+  .footer { text-align: center; padding: 20px; color: var(--text-dim); font-size: 0.75em; }
+
+  @media (max-width: 720px) {
+    .scores-row { flex-direction: column; }
+    .grid { grid-template-columns: 1fr; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .fetch-status { margin-left: 0; margin-top: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Macro Economic Monitoring Dashboard</h1>
+  <div class="subtitle">Based on "The Price of Time" by Edward Chancellor</div>
+  <div class="updated" id="lastUpdated">Last updated: --</div>
+</div>
+
+<div class="controls">
+  <button class="btn-fetch" id="fetchBtn" onclick="fetchAllData()">Refresh Live Data</button>
+  <span class="fetch-status" id="fetchStatus">Loading...</span>
+</div>
+
+<div class="progress-bar" id="progressBar">
+  <div class="progress-bar-fill" id="progressFill"></div>
+</div>
+
+<div class="regime-banner" id="regimeBanner">Loading data...</div>
+
+<div class="scores-row">
+  <div class="score-card">
+    <h3>Inflation Score</h3>
+    <div class="score-value" id="inflationScore">--</div>
+    <div class="score-label">0-1 Low | 2 Moderate | 3-4 High</div>
+  </div>
+  <div class="score-card">
+    <h3>Growth Score</h3>
+    <div class="score-value" id="growthScore">--</div>
+    <div class="score-label">0-1 Weak | 2 Moderate | 3-4 Strong</div>
+  </div>
+  <div class="score-card">
+    <h3>Credit Stress</h3>
+    <div class="score-value" id="creditScore">--</div>
+    <div class="score-label">0 Calm | 1-2 Elevated | 3-4 Stress</div>
+  </div>
+</div>
+
+<div class="grid" id="metricsGrid"></div>
+
+<div class="card" style="margin-bottom: 20px;">
+  <h2>Portfolio Allocation by Regime</h2>
+  <div style="overflow-x: auto;">
+    <table class="portfolio-table" id="portfolioTable"></table>
+  </div>
+</div>
+
+<div class="footer">
+  Macro Economic Monitoring System &bull; Live data from FRED (Federal Reserve) &bull; Just open this file to refresh
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════
+const API_KEY = "37f3817b363006eb0a146eb7ce601f77";
+const CACHE_KEY = "macro_dashboard_cache";
+const CACHE_MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
+
+// CORS proxies to try in order (FRED API doesn't send CORS headers)
+const CORS_PROXIES = [
+  function(url) { return "https://corsproxy.io/?" + encodeURIComponent(url); },
+  function(url) { return "https://api.allorigins.win/raw?url=" + encodeURIComponent(url); },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// MARKET DATA
+// ═══════════════════════════════════════════════════════════════════
+var marketData = {
+  fedFundsRate: null, treasury10Y: null, treasury2Y: null,
+  tips10Y: null, breakeven10Y: null,
+  cpiYoY: null, corePCE: null, forward5Y5Y: null, cpiMoM: null,
+  hySpread: null, igSpread: null, aaSpread: null,
+  unemployment: null, nfp: null, initialClaims: null, jolts: null,
+  gdpGrowth: null, vix: null, sp500: null,
+  lastUpdated: "--"
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// SERIES DEFINITIONS
+// ═══════════════════════════════════════════════════════════════════
+var SERIES = [
+  // Simple series: just grab latest value
+  { id: "DFF",           key: "fedFundsRate",  limit: 1,  transform: "latest" },
+  { id: "DGS10",         key: "treasury10Y",   limit: 1,  transform: "latest" },
+  { id: "DGS2",          key: "treasury2Y",    limit: 1,  transform: "latest" },
+  { id: "DFII10",        key: "tips10Y",       limit: 1,  transform: "latest" },
+  { id: "T10YIE",        key: "breakeven10Y",  limit: 1,  transform: "latest" },
+  { id: "T5YIFR",        key: "forward5Y5Y",   limit: 1,  transform: "latest" },
+  { id: "UNRATE",        key: "unemployment",  limit: 1,  transform: "latest" },
+  { id: "VIXCLS",        key: "vix",           limit: 1,  transform: "latest" },
+  { id: "SP500",         key: "sp500",         limit: 1,  transform: "latest" },
+  // Credit spreads: multiply by 100 for basis points
+  { id: "BAMLH0A0HYM2",  key: "hySpread",     limit: 1,  transform: "bps" },
+  { id: "BAMLC0A0CM",     key: "igSpread",     limit: 1,  transform: "bps" },
+  { id: "BAMLC0A3CA",     key: "aaSpread",     limit: 1,  transform: "bps" },
+  // YoY percent change series: need 15 months of data
+  { id: "CPIAUCSL",   key: "cpiYoY",    limit: 15, transform: "yoy" },
+  { id: "CPIAUCSL",   key: "cpiMoM",    limit: 3,  transform: "mom_pct", dupOf: "CPIAUCSL" },
+  { id: "PCEPILFE",   key: "corePCE",   limit: 15, transform: "yoy" },
+  // MoM change in thousands (payrolls)
+  { id: "PAYEMS",     key: "nfp",        limit: 3,  transform: "mom_change" },
+  // Divide by 1000
+  { id: "ICSA",       key: "initialClaims", limit: 1, transform: "div1000" },
+  { id: "JTSJOL",     key: "jolts",         limit: 1, transform: "div1000" },
+  // GDP QoQ annualized
+  { id: "GDP",        key: "gdpGrowth",     limit: 3, transform: "gdp_qoq" },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// FRED API FETCHING WITH CORS PROXY
+// ═══════════════════════════════════════════════════════════════════
+function buildFredUrl(seriesId, limit) {
+  var startDate = new Date();
+  startDate.setDate(startDate.getDate() - 500);
+  var startStr = startDate.toISOString().split("T")[0];
+  return "https://api.stlouisfed.org/fred/series/observations" +
+    "?series_id=" + seriesId +
+    "&api_key=" + API_KEY +
+    "&file_type=json&sort_order=desc" +
+    "&limit=" + limit +
+    "&observation_start=" + startStr;
+}
+
+async function fetchWithProxy(url) {
+  // Try direct first (works on some browsers/setups)
+  try {
+    var resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (resp.ok) {
+      var data = await resp.json();
+      if (data && data.observations) return data;
+    }
+  } catch(e) { /* direct failed, try proxies */ }
+
+  // Try each CORS proxy
+  for (var i = 0; i < CORS_PROXIES.length; i++) {
+    try {
+      var proxyUrl = CORS_PROXIES[i](url);
+      var resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
+      if (resp.ok) {
+        var data = await resp.json();
+        if (data && data.observations) return data;
+      }
+    } catch(e) { /* try next proxy */ }
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DATA TRANSFORMS
+// ═══════════════════════════════════════════════════════════════════
+function getValidObs(observations) {
+  return observations.filter(function(o) {
+    return o.value !== "." && o.value !== "" && o.value != null;
+  });
+}
+
+function transformLatest(obs) {
+  var valid = getValidObs(obs);
+  return valid.length > 0 ? parseFloat(valid[0].value) : null;
+}
+
+function transformBps(obs) {
+  var val = transformLatest(obs);
+  return val !== null ? val * 100 : null;
+}
+
+function transformYoy(obs) {
+  var valid = getValidObs(obs);
+  if (valid.length < 2) return null;
+  var latest = parseFloat(valid[0].value);
+  var latestDate = new Date(valid[0].date);
+  var targetDate = new Date(latestDate);
+  targetDate.setFullYear(targetDate.getFullYear() - 1);
+
+  var bestMatch = null;
+  var bestDiff = 999999999;
+  for (var i = 1; i < valid.length; i++) {
+    var d = new Date(valid[i].date);
+    var diff = Math.abs(d - targetDate);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestMatch = valid[i];
+    }
+  }
+  if (bestMatch && bestDiff < 50 * 24 * 60 * 60 * 1000) { // within 50 days
+    var yearAgo = parseFloat(bestMatch.value);
+    if (yearAgo !== 0) return ((latest - yearAgo) / yearAgo) * 100;
+  }
+  return null;
+}
+
+function transformMomPct(obs) {
+  var valid = getValidObs(obs);
+  if (valid.length < 2) return null;
+  var latest = parseFloat(valid[0].value);
+  var prev = parseFloat(valid[1].value);
+  if (prev !== 0) return ((latest - prev) / prev) * 100;
+  return null;
+}
+
+function transformMomChange(obs) {
+  var valid = getValidObs(obs);
+  if (valid.length < 2) return null;
+  return parseFloat(valid[0].value) - parseFloat(valid[1].value);
+}
+
+function transformDiv1000(obs) {
+  var val = transformLatest(obs);
+  return val !== null ? val / 1000 : null;
+}
+
+function transformGdpQoq(obs) {
+  var valid = getValidObs(obs);
+  if (valid.length < 2) return null;
+  var latest = parseFloat(valid[0].value);
+  var prev = parseFloat(valid[1].value);
+  if (prev !== 0) {
+    var qoq = (latest - prev) / prev;
+    return (Math.pow(1 + qoq, 4) - 1) * 100;
+  }
+  return null;
+}
+
+var TRANSFORMS = {
+  "latest": transformLatest,
+  "bps": transformBps,
+  "yoy": transformYoy,
+  "mom_pct": transformMomPct,
+  "mom_change": transformMomChange,
+  "div1000": transformDiv1000,
+  "gdp_qoq": transformGdpQoq,
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// FETCH ALL DATA
+// ═══════════════════════════════════════════════════════════════════
+var isFetching = false;
+
+async function fetchAllData() {
+  if (isFetching) return;
+  isFetching = true;
+
+  var btn = document.getElementById("fetchBtn");
+  btn.disabled = true;
+  btn.textContent = "Fetching...";
+  setStatus("Connecting to FRED API...", "");
+
+  var bar = document.getElementById("progressBar");
+  var fill = document.getElementById("progressFill");
+  bar.className = "progress-bar active";
+  fill.style.width = "0%";
+
+  // Deduplicate fetches (CPIAUCSL appears twice with different limits)
+  var fetchMap = {}; // seriesId -> max limit needed
+  for (var i = 0; i < SERIES.length; i++) {
+    var s = SERIES[i];
+    if (!fetchMap[s.id] || s.limit > fetchMap[s.id]) {
+      fetchMap[s.id] = s.limit;
+    }
+  }
+
+  var seriesIds = Object.keys(fetchMap);
+  var total = seriesIds.length;
+  var fetched = 0;
+  var failed = 0;
+  var rawData = {}; // seriesId -> observations
+
+  // Fetch with small delay between requests to respect rate limits
+  for (var i = 0; i < seriesIds.length; i++) {
+    var sid = seriesIds[i];
+    setStatus("Fetching " + sid + " (" + (i+1) + "/" + total + ")...", "");
+    fill.style.width = Math.round(((i+1) / total) * 100) + "%";
+
+    try {
+      var url = buildFredUrl(sid, fetchMap[sid]);
+      var data = await fetchWithProxy(url);
+      if (data && data.observations && data.observations.length > 0) {
+        rawData[sid] = data.observations;
+        fetched++;
+      } else {
+        failed++;
+      }
+    } catch(e) {
+      failed++;
+    }
+
+    // Small delay between requests
+    if (i < seriesIds.length - 1) {
+      await new Promise(function(r) { setTimeout(r, 400); });
+    }
+  }
+
+  // Apply transforms
+  for (var i = 0; i < SERIES.length; i++) {
+    var s = SERIES[i];
+    if (rawData[s.id]) {
+      var fn = TRANSFORMS[s.transform];
+      if (fn) {
+        var val = fn(rawData[s.id]);
+        if (val !== null) {
+          marketData[s.key] = Math.round(val * 100) / 100;
+        }
+      }
+    }
+  }
+
+  marketData.lastUpdated = new Date().toLocaleString();
+
+  // Cache to localStorage
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      data: marketData,
+      timestamp: Date.now()
+    }));
+  } catch(e) {}
+
+  bar.className = "progress-bar";
+  btn.disabled = false;
+  btn.textContent = "Refresh Live Data";
+  isFetching = false;
+
+  if (fetched > 0) {
+    setStatus(fetched + "/" + total + " series fetched successfully" + (failed > 0 ? " (" + failed + " failed)" : ""), "success");
+  } else {
+    setStatus("Could not fetch data. Check your internet connection.", "error");
+  }
+
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CACHE: Load from localStorage for instant display
+// ═══════════════════════════════════════════════════════════════════
+function loadCache() {
+  try {
+    var cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return false;
+    var parsed = JSON.parse(cached);
+    if (!parsed.data || !parsed.timestamp) return false;
+    Object.assign(marketData, parsed.data);
+    return true;
+  } catch(e) { return false; }
+}
+
+function isCacheFresh() {
+  try {
+    var cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return false;
+    var parsed = JSON.parse(cached);
+    return (Date.now() - parsed.timestamp) < CACHE_MAX_AGE_MS;
+  } catch(e) { return false; }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STATUS DISPLAY
+// ═══════════════════════════════════════════════════════════════════
+function setStatus(msg, type) {
+  var el = document.getElementById("fetchStatus");
+  el.textContent = msg;
+  el.className = "fetch-status" + (type ? " " + type : "");
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// THRESHOLD DEFINITIONS
+// ═══════════════════════════════════════════════════════════════════
+function getStatus(value, thresholds) {
+  for (var i = 0; i < thresholds.length; i++) {
+    var t = thresholds[i];
+    if (t.min !== undefined && t.max !== undefined) {
+      if (value >= t.min && value <= t.max) return { label: t.label, color: t.color };
+    } else if (t.max !== undefined) {
+      if (value <= t.max) return { label: t.label, color: t.color };
+    } else if (t.min !== undefined) {
+      if (value >= t.min) return { label: t.label, color: t.color };
+    }
+  }
+  return { label: "N/A", color: "blue" };
+}
+
+var sections = [
+  {
+    title: "Interest Rates & Yields",
+    metrics: [
+      { label: "Fed Funds Rate", key: "fedFundsRate", suffix: "%",
+        thresholds: [{max: 2.5, label: "Accommodative", color: "green"}, {max: 5.0, label: "Neutral", color: "yellow"}, {min: 5.0, label: "Restrictive", color: "red"}]},
+      { label: "10-Year Treasury", key: "treasury10Y", suffix: "%",
+        thresholds: [{max: 3.0, label: "Low", color: "green"}, {max: 4.5, label: "Normal", color: "yellow"}, {min: 4.5, label: "High", color: "orange"}]},
+      { label: "2-Year Treasury", key: "treasury2Y", suffix: "%",
+        thresholds: [{max: 3.0, label: "Low", color: "green"}, {max: 4.5, label: "Normal", color: "yellow"}, {min: 4.5, label: "High", color: "orange"}]},
+      { label: "Yield Curve (10Y-2Y)", computed: function() {
+          if (marketData.treasury10Y == null || marketData.treasury2Y == null) return {val: null, display: "N/A"};
+          var v = (marketData.treasury10Y - marketData.treasury2Y) * 100;
+          return {val: v, display: v.toFixed(0) + " bp"};
+        },
+        thresholds: [{max: 0, label: "INVERTED", color: "red"}, {max: 50, label: "Flat", color: "yellow"}, {min: 50, label: "Normal", color: "green"}]},
+      { label: "10-Year TIPS (Real)", key: "tips10Y", suffix: "%",
+        thresholds: [{max: 0, label: "Loose", color: "green"}, {max: 0.5, label: "Moderate", color: "yellow"}, {max: 2.0, label: "Tight", color: "orange"}, {min: 2.0, label: "Very Tight", color: "red"}]},
+      { label: "10Y Breakeven Inflation", key: "breakeven10Y", suffix: "%",
+        thresholds: [{max: 2.0, label: "Low Expected", color: "green"}, {max: 3.0, label: "Normal", color: "yellow"}, {min: 3.0, label: "High Expected", color: "red"}]},
+    ]
+  },
+  {
+    title: "Inflation Metrics",
+    metrics: [
+      { label: "CPI Year-over-Year", key: "cpiYoY", suffix: "%",
+        thresholds: [{max: 2.0, label: "Low", color: "green"}, {max: 3.0, label: "Normal", color: "yellow"}, {max: 5.0, label: "Elevated", color: "orange"}, {min: 5.0, label: "Very High", color: "red"}]},
+      { label: "Core PCE (Fed Target)", key: "corePCE", suffix: "%",
+        thresholds: [{max: 1.5, label: "Below Target", color: "blue"}, {max: 2.5, label: "At Target", color: "green"}, {max: 4.0, label: "Above Target", color: "orange"}, {min: 4.0, label: "Very High", color: "red"}]},
+      { label: "CPI Month-over-Month", key: "cpiMoM", suffix: "%",
+        thresholds: [{max: 0.2, label: "Cool", color: "green"}, {max: 0.4, label: "Warm", color: "yellow"}, {min: 0.4, label: "Hot", color: "red"}]},
+      { label: "5Y5Y Forward Inflation", key: "forward5Y5Y", suffix: "%",
+        thresholds: [{max: 2.0, label: "Unanchored Low", color: "blue"}, {max: 3.0, label: "Anchored", color: "green"}, {min: 3.0, label: "Unanchored High", color: "red"}]},
+    ]
+  },
+  {
+    title: "Credit Conditions",
+    metrics: [
+      { label: "HY OAS Spread", key: "hySpread", suffix: " bp",
+        thresholds: [{max: 300, label: "Tight", color: "blue"}, {max: 400, label: "Normal", color: "green"}, {max: 600, label: "Elevated", color: "orange"}, {min: 600, label: "STRESS", color: "red"}]},
+      { label: "IG OAS Spread", key: "igSpread", suffix: " bp",
+        thresholds: [{max: 80, label: "Tight", color: "blue"}, {max: 130, label: "Normal", color: "green"}, {max: 200, label: "Elevated", color: "orange"}, {min: 200, label: "STRESS", color: "red"}]},
+      { label: "AA OAS Spread", key: "aaSpread", suffix: " bp",
+        thresholds: [{max: 60, label: "Normal", color: "green"}, {max: 100, label: "Elevated", color: "orange"}, {min: 100, label: "Stress", color: "red"}]},
+    ]
+  },
+  {
+    title: "Labor Market",
+    metrics: [
+      { label: "Unemployment Rate", key: "unemployment", suffix: "%",
+        thresholds: [{max: 3.5, label: "Tight", color: "blue"}, {max: 5.0, label: "Normal", color: "green"}, {max: 6.0, label: "Weakening", color: "orange"}, {min: 6.0, label: "Recession", color: "red"}]},
+      { label: "Nonfarm Payrolls (MoM)", key: "nfp", suffix: "k",
+        thresholds: [{max: 0, label: "Contraction", color: "red"}, {max: 100, label: "Slowing", color: "orange"}, {max: 250, label: "Normal", color: "green"}, {min: 250, label: "Strong", color: "blue"}]},
+      { label: "Initial Claims", key: "initialClaims", suffix: "k",
+        thresholds: [{max: 250, label: "Normal", color: "green"}, {max: 300, label: "Elevated", color: "orange"}, {min: 300, label: "Recession Risk", color: "red"}]},
+      { label: "JOLTS Openings", key: "jolts", suffix: "M",
+        thresholds: [{max: 7, label: "Weak", color: "orange"}, {max: 9, label: "Normal", color: "green"}, {min: 9, label: "Very Tight", color: "blue"}]},
+    ]
+  },
+  {
+    title: "Growth & Activity",
+    metrics: [
+      { label: "GDP Growth (QoQ Ann.)", key: "gdpGrowth", suffix: "%",
+        thresholds: [{max: 0, label: "Contraction", color: "red"}, {max: 1.0, label: "Stall Speed", color: "orange"}, {max: 3.0, label: "Normal", color: "green"}, {min: 3.0, label: "Strong", color: "blue"}]},
+    ]
+  },
+  {
+    title: "Market Indicators",
+    metrics: [
+      { label: "S&P 500", key: "sp500", suffix: "",
+        thresholds: [{min: 0, label: "", color: "blue"}]},
+      { label: "VIX", key: "vix", suffix: "",
+        thresholds: [{max: 12, label: "Complacent", color: "blue"}, {max: 20, label: "Normal", color: "green"}, {max: 30, label: "Elevated", color: "orange"}, {min: 30, label: "FEAR", color: "red"}]},
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// REGIME DETECTION
+// ═══════════════════════════════════════════════════════════════════
+function computeScores() {
+  var d = marketData;
+  var inflationScore = 0;
+  if (d.cpiYoY != null && d.cpiYoY > 3) inflationScore++;
+  if (d.corePCE != null && d.corePCE > 2.5) inflationScore++;
+  if (d.breakeven10Y != null && d.breakeven10Y > 2.5) inflationScore++;
+  if (d.forward5Y5Y != null && d.forward5Y5Y > 2.8) inflationScore++;
+
+  var growthScore = 0;
+  if (d.gdpGrowth != null && d.gdpGrowth > 2) growthScore++;
+  if (d.nfp != null && d.nfp > 150) growthScore++;
+  if (d.unemployment != null && d.unemployment < 5) growthScore++;
+  if (d.jolts != null && d.jolts > 8) growthScore++;
+
+  var creditScore = 0;
+  if (d.hySpread != null && d.hySpread > 500) creditScore++;
+  if (d.igSpread != null && d.igSpread > 150) creditScore++;
+  if (d.vix != null && d.vix > 25) creditScore++;
+
+  return { inflationScore: inflationScore, growthScore: growthScore, creditScore: creditScore };
+}
+
+function detectRegime(scores) {
+  var inflationScore = scores.inflationScore;
+  var growthScore = scores.growthScore;
+  if (inflationScore >= 3 && growthScore >= 2) return { regime: "STAGFLATION WARNING", css: "stagflation", implication: "Reduce risk, add commodities & TIPS, short zombies" };
+  if (inflationScore >= 3 && growthScore <= 1) return { regime: "STAGFLATION", css: "stagflation", implication: "Max defensive: commodities, TIPS, cash, short zombies" };
+  if (inflationScore >= 2 && growthScore >= 3) return { regime: "INFLATIONARY BOOM", css: "inflation", implication: "Equities + commodities, short duration" };
+  if (inflationScore <= 1 && growthScore >= 3) return { regime: "GOLDILOCKS", css: "goldilocks", implication: "Risk-on: equities, credit, moderate duration" };
+  if (inflationScore <= 1 && growthScore <= 1) return { regime: "DEFLATIONARY BUST", css: "bust", implication: "Long duration bonds, reduce equities, defensive sectors" };
+  if (growthScore <= 1) return { regime: "SLOWDOWN", css: "slowdown", implication: "Add duration, reduce cyclicals, quality focus" };
+  if (inflationScore >= 2) return { regime: "INFLATION RISING", css: "inflation", implication: "Short duration, add commodities, reduce bonds" };
+  return { regime: "NORMAL / TRANSITION", css: "normal", implication: "Monitor closely, maintain balanced positioning" };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════════
+function render() {
+  document.getElementById("lastUpdated").textContent = "Last updated: " + marketData.lastUpdated;
+
+  var scores = computeScores();
+  var scoreColors = [
+    {id: "inflationScore", val: scores.inflationScore, thresholds: [{max:1,color:"green"},{max:2,color:"yellow"},{min:3,color:"red"}]},
+    {id: "growthScore", val: scores.growthScore, thresholds: [{max:1,color:"red"},{max:2,color:"yellow"},{min:3,color:"green"}]},
+    {id: "creditScore", val: scores.creditScore, thresholds: [{max:0,color:"green"},{max:2,color:"yellow"},{min:3,color:"red"}]},
+  ];
+  for (var i = 0; i < scoreColors.length; i++) {
+    var sc = scoreColors[i];
+    var el = document.getElementById(sc.id);
+    el.textContent = sc.val + " / 4";
+    var st = getStatus(sc.val, sc.thresholds);
+    el.style.color = "var(--" + st.color + ")";
+  }
+
+  var regimeResult = detectRegime(scores);
+  var banner = document.getElementById("regimeBanner");
+  banner.className = "regime-banner regime-" + regimeResult.css;
+  banner.innerHTML = "REGIME: " + regimeResult.regime + '<span class="regime-implication">' + regimeResult.implication + '</span>';
+
+  var grid = document.getElementById("metricsGrid");
+  grid.innerHTML = "";
+  for (var s = 0; s < sections.length; s++) {
+    var section = sections[s];
+    var card = document.createElement("div");
+    card.className = "card";
+    var html = "<h2>" + section.title + "</h2>";
+    for (var m = 0; m < section.metrics.length; m++) {
+      var metric = section.metrics[m];
+      var val, displayVal;
+      if (metric.computed) {
+        var result = metric.computed();
+        val = result.val;
+        displayVal = result.display;
+      } else {
+        val = marketData[metric.key];
+        if (val == null) {
+          displayVal = "--";
+        } else {
+          displayVal = (Number.isInteger(val) ? val : val.toFixed(2)) + (metric.suffix || "");
+        }
+      }
+      var status = (typeof val === "number") ? getStatus(val, metric.thresholds) : { label: "--", color: "blue" };
+      var loadingClass = val == null ? " loading" : "";
+      html += '<div class="metric">' +
+        '<span class="metric-label">' + metric.label + '</span>' +
+        '<span class="metric-value' + loadingClass + '">' + displayVal + '</span>' +
+        '<span class="metric-status status-' + status.color + '">' + status.label + '</span>' +
+        '</div>';
+    }
+    card.innerHTML = html;
+    grid.appendChild(card);
+  }
+
+  // Portfolio table
+  var allocations = [
+    ["US Equities",      35, 25, 10, 20, 15],
+    ["Int'l Equities",   15, 10,  5, 10,  5],
+    ["Long Bonds",       15,  5,  5, 25, 35],
+    ["TIPS / I-Bonds",    5, 15, 20,  5,  5],
+    ["Short Bonds/Cash",  5, 10, 15, 15, 20],
+    ["Commodities",       5, 15, 20,  5,  0],
+    ["Gold",              5, 10, 15, 10, 10],
+    ["REITs",            10,  5,  0,  5,  5],
+    ["Crypto/Alts",       5,  5,  0,  0,  0],
+    ["Zombie Shorts",     0,  0, 10,  5,  5],
+  ];
+  var regimeNames = ["Goldilocks", "Inflation+", "Stagflation", "Slowdown", "Defl. Bust"];
+  var regimeMap = {"GOLDILOCKS":0, "INFLATIONARY BOOM":1, "INFLATION RISING":1, "STAGFLATION":2, "STAGFLATION WARNING":2, "SLOWDOWN":3, "DEFLATIONARY BUST":4, "NORMAL / TRANSITION":0};
+  var activeCol = regimeMap[regimeResult.regime] !== undefined ? regimeMap[regimeResult.regime] : 0;
+
+  var table = document.getElementById("portfolioTable");
+  var thtml = "<tr><th>Asset Class</th>";
+  for (var i = 0; i < regimeNames.length; i++) {
+    thtml += "<th" + (i === activeCol ? ' class="highlight"' : "") + ">" + regimeNames[i] + "</th>";
+  }
+  thtml += "</tr>";
+  for (var r = 0; r < allocations.length; r++) {
+    var row = allocations[r];
+    thtml += "<tr><td>" + row[0] + "</td>";
+    for (var c = 1; c <= 5; c++) {
+      thtml += "<td" + (c-1 === activeCol ? ' class="highlight"' : "") + ">" + row[c] + "%</td>";
+    }
+    thtml += "</tr>";
+  }
+  table.innerHTML = thtml;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STARTUP
+// ═══════════════════════════════════════════════════════════════════
+(function init() {
+  // Load cached data first for instant display
+  var hadCache = loadCache();
+  if (hadCache) {
+    setStatus("Showing cached data. Refreshing...", "success");
+    render();
+  }
+
+  // Always fetch fresh data on page load
+  fetchAllData();
+})();
+</script>
+</body>
+</html>

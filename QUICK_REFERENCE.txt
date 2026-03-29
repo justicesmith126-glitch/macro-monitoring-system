@@ -1,0 +1,258 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║          MACRO MONITORING SYSTEM - QUICK REFERENCE CARD            ║
+║        Based on "The Price of Time" by Edward Chancellor           ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════════
+ KEY THRESHOLDS AT A GLANCE
+═══════════════════════════════════════════════════════════════════════
+
+ INTEREST RATES
+ ─────────────────────────────────────────────────────────────────────
+ Fed Funds Rate:
+   > 5.0%  = Restrictive    2.5-5.0% = Neutral     < 2.5% = Accommodative
+
+ 10-Year Treasury:
+   > 4.5%  = High           3.0-4.5% = Normal      < 3.0% = Low
+
+ Yield Curve (10Y - 2Y):
+   < 0 bp  = INVERTED (Recession signal!)
+   0-50 bp = Flat           > 50 bp  = Normal
+
+ REAL RATES (the most important price in capitalism)
+ ─────────────────────────────────────────────────────────────────────
+ Real Fed Funds (Fed Funds - CPI):
+   > 2.0%  = Very Tight     0-2.0%   = Tight
+   -1-0%   = Neutral        < -1.0%  = Loose
+
+ Real 10Y (TIPS):
+   > 2.0%  = Very Tight     0.5-2.0% = Tight
+   -0.5-0.5% = Neutral      < -0.5%  = Loose
+
+ INFLATION
+ ─────────────────────────────────────────────────────────────────────
+ CPI Year-over-Year:
+   > 5.0%  = Very High      3.0-5.0% = Elevated
+   2.0-3.0% = Normal        < 2.0%   = Low
+
+ Core PCE (Fed's preferred):
+   > 4.0%  = Very High      2.5-4.0% = Above Target
+   1.5-2.5% = At Target     < 1.5%   = Below Target
+
+ CPI Month-over-Month:
+   > 0.4%  = Hot            0.2-0.4% = Warm        < 0.2% = Cool
+
+ 5Y5Y Forward Inflation:
+   > 3.0%  = Unanchored     2.0-3.0% = Anchored    < 2.0% = Unanchored Low
+
+ CREDIT SPREADS
+ ─────────────────────────────────────────────────────────────────────
+ High Yield OAS:
+   > 600bp = STRESS         400-600bp = Elevated
+   300-400bp = Normal       < 300bp   = Tight (complacent)
+
+ Investment Grade OAS:
+   > 200bp = STRESS         130-200bp = Elevated
+   80-130bp = Normal        < 80bp    = Tight
+
+ TED Spread:
+   > 100bp = Banking Stress  50-100bp = Elevated    < 50bp = Normal
+
+ LABOR MARKET
+ ─────────────────────────────────────────────────────────────────────
+ Unemployment:
+   > 6.0%  = Recession      5.0-6.0% = Weakening
+   3.5-5.0% = Normal        < 3.5%   = Tight
+
+ Nonfarm Payrolls (monthly change):
+   < 0k    = CONTRACTION    0-100k   = Slowing
+   100-250k = Normal        > 250k   = Strong
+
+ Initial Claims:
+   > 300k  = Recession Risk  > 250k  = Elevated    < 250k = Normal
+
+ GROWTH
+ ─────────────────────────────────────────────────────────────────────
+ GDP (QoQ annualized):
+   < 0%    = CONTRACTION    0-1.0%   = Stall Speed
+   1.0-3.0% = Normal        > 3.0%   = Strong
+
+ ISM Manufacturing & Services PMI:
+   < 45    = Deep Contraction   45-50 = Contraction
+   50-55   = Expansion          > 55  = Strong Expansion
+
+ MARKET
+ ─────────────────────────────────────────────────────────────────────
+ VIX:
+   > 30    = FEAR           20-30    = Elevated
+   12-20   = Normal         < 12     = Complacent
+
+
+═══════════════════════════════════════════════════════════════════════
+ REGIME DETECTION MATRIX
+═══════════════════════════════════════════════════════════════════════
+
+                    Strong Growth        Weak Growth
+                 ┌──────────────────┬──────────────────┐
+ High Inflation  │  INFLATIONARY    │   STAGFLATION    │
+                 │     BOOM         │   (worst case)   │
+                 │ Commodities win  │ Cash & gold win  │
+                 ├──────────────────┼──────────────────┤
+ Low Inflation   │   GOLDILOCKS     │   DEFLATIONARY   │
+                 │  (best case)     │      BUST        │
+                 │ Equities win     │ Long bonds win   │
+                 └──────────────────┴──────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════
+ PORTFOLIO ALLOCATIONS BY REGIME
+═══════════════════════════════════════════════════════════════════════
+
+ Asset Class        GOLD  INF+  STAG  SLOW  BUST
+ ─────────────────  ────  ────  ────  ────  ────
+ US Equities         35%   25%   10%   20%   15%
+ Int'l Equities      15%   10%    5%   10%    5%
+ Long Bonds          15%    5%    5%   25%   35%
+ TIPS / I-Bonds       5%   15%   20%    5%    5%
+ Short Bonds/Cash     5%   10%   15%   15%   20%
+ Commodities          5%   15%   20%    5%    0%
+ Gold                 5%   10%   15%   10%   10%
+ REITs               10%    5%    0%    5%    5%
+ Crypto/Alts          5%    5%    0%    0%    0%
+ Zombie Shorts        0%    0%   10%    5%    5%
+
+ GOLD = Goldilocks  INF+ = Inflation Rising  STAG = Stagflation
+ SLOW = Slowdown    BUST = Deflationary Bust
+
+
+═══════════════════════════════════════════════════════════════════════
+ FRED CODES TO MEMORIZE
+═══════════════════════════════════════════════════════════════════════
+
+ The Big 5 (check weekly):
+   DGS10          10-Year Treasury
+   DFII10         10-Year TIPS (real rate)
+   T10YIE         Breakeven inflation
+   BAMLH0A0HYM2   High Yield spread
+   PCEPILFE       Core PCE inflation
+
+ Daily Market:
+   DFF            Fed Funds Rate (daily)
+   DGS2           2-Year Treasury
+   VIXCLS         VIX
+   SP500          S&P 500
+
+ Monthly/Quarterly:
+   CPIAUCSL       CPI
+   UNRATE         Unemployment
+   PAYEMS         Nonfarm Payrolls
+   GDP            GDP
+
+
+═══════════════════════════════════════════════════════════════════════
+ WEEKLY UPDATE CHECKLIST
+═══════════════════════════════════════════════════════════════════════
+
+ Monday Morning (10 minutes):
+ □ Run: python macro_data_updater.py
+ □ Check regime detection in Excel row 52
+ □ Note any threshold crossings
+ □ Review portfolio alignment
+
+ Monthly (30 minutes):
+ □ Run full update
+ □ Copy row to Historical Tracking sheet
+ □ Review zombie screener candidates
+ □ Check for regime change signals
+ □ Compare portfolio to recommended allocation
+
+ Quarterly (1 hour):
+ □ Deep review of all metrics
+ □ Evaluate regime trend over past 3 months
+ □ Rebalance portfolio if regime changed
+ □ Update zombie screener with fresh financials
+ □ Review and adjust personal thresholds
+
+
+═══════════════════════════════════════════════════════════════════════
+ REBALANCING TRIGGERS
+═══════════════════════════════════════════════════════════════════════
+
+ ACT when:
+ □ Regime changes AND persists for 2-4 weeks
+ □ HY spreads cross 500bp (up = reduce risk, down = add risk)
+ □ Real rates cross zero (up = tighten, down = loosen)
+ □ Yield curve inverts or un-inverts
+ □ VIX spikes above 30 (hedge/reduce) or falls below 12 (be cautious)
+ □ Two or more zombie scores exceed 7
+
+ WAIT when:
+ □ Single data point moves (need confirmation)
+ □ Market event but no threshold crossing
+ □ Emotional response to news headlines
+
+
+═══════════════════════════════════════════════════════════════════════
+ RISK MANAGEMENT RULES
+═══════════════════════════════════════════════════════════════════════
+
+ Position Sizing:
+ • Max 5% of portfolio per zombie short
+ • Max 20% total in zombie shorts
+ • Use put options, never naked shorts
+ • Rebalance when allocation drifts >5% from target
+
+ Stop Loss Levels:
+ • Individual zombie short: exit at 50% loss
+ • Total portfolio drawdown > 15%: reduce risk by 50%
+ • Regime shifts to unfavorable: begin transition within 2 weeks
+
+
+═══════════════════════════════════════════════════════════════════════
+ ETF QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════════
+
+ Category          Primary   Alternatives
+ ───────────────   ───────   ─────────────────────
+ US Equities       SPY       VOO, VTI, QQQ
+ Int'l Developed   EFA       VEA, IEFA, SCHF
+ Emerging Markets  VWO       EEM, IEMG, SCHE
+ Long Bonds        TLT       VGLT, EDV, ZROZ
+ TIPS              TIP       SCHP, VTIP, STIP
+ Short Bonds       SHV       BIL, SGOV, SHY
+ Commodities       DBC       GSG, PDBC, COMT
+ Gold              GLD       IAU, GLDM, SGOL
+ Real Estate       VNQ       SCHH, IYR, XLRE
+ Cash Equivalent   VMFXX     SPAXX, SWVXX
+
+
+═══════════════════════════════════════════════════════════════════════
+ EMERGENCY PROTOCOL
+═══════════════════════════════════════════════════════════════════════
+
+ If HY spreads > 800bp AND VIX > 35 AND yield curve deeply inverted:
+
+ 1. IMMEDIATE: Raise cash to 25%+ of portfolio
+ 2. WITHIN 1 WEEK: Cut equity exposure by 50%
+ 3. ADD: Long-duration Treasuries (TLT), Gold (GLD)
+ 4. REVIEW: All zombie shorts - increase if conviction high
+ 5. WAIT: For regime to stabilize before re-entering risk
+
+
+═══════════════════════════════════════════════════════════════════════
+ THE GOLDEN RULES
+═══════════════════════════════════════════════════════════════════════
+
+ 1. Real rates are the most important price in capitalism
+ 2. Regimes matter more than forecasts
+ 3. Position for the regime, adjust when it changes
+ 4. Never bet the farm on one indicator
+ 5. Zombies die when rates rise - it's just a matter of time
+ 6. Wait for confirmation (2-4 weeks minimum)
+ 7. Risk management > return maximization
+ 8. Update consistently - the system only works if you use it
+
+═══════════════════════════════════════════════════════════════════════
+ Created: February 2026 | Based on "The Price of Time"
+═══════════════════════════════════════════════════════════════════════
